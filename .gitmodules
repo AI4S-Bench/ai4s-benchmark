@@ -1,0 +1,6 @@
+[submodule "references/harbor"]
+	path = references/harbor
+	url = https://github.com/harbor-framework/harbor.git
+[submodule "references/terminal-bench-science"]
+	path = references/terminal-bench-science
+	url = https://github.com/harbor-framework/terminal-bench-science.git

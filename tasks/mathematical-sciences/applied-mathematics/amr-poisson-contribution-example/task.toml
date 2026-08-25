@@ -1,0 +1,11 @@
+[metadata]
+id = "amr-poisson-contribution-example"
+title = "AMR Poisson contribution shape example"
+author = "ai4sbench maintainers"
+license = "MIT"
+
+[task]
+category = "mathematical-sciences/applied-mathematics"
+description = "A schema-valid contribution fixture derived from the Terminal-Bench Science AMR Poisson task workflow."
+upstream_reference = "https://github.com/harbor-framework/terminal-bench-science"
+

@@ -1,0 +1,59 @@
+schema_version = "1.0"
+name = "ai4sbench"
+description = "Harbor-based benchmark catalog for reproducible CPU, data, and GPU scientific tasks."
+
+[runtime.harbor]
+distribution = "harbor"
+version = "0.20.0"
+install_mode = "prebuilt-wheel-only"
+
+[upstreams.terminal_bench_science]
+repo_url = "https://github.com/harbor-framework/terminal-bench-science.git"
+commit = "1fafc470bdc6c84820219d282fe6b154120596ad"
+
+[[tasks]]
+id = "tb-science/amr-poisson-optimize"
+source = "terminal_bench_science"
+path = "tasks/mathematical-sciences/applied-mathematics/amr-poisson-optimize"
+resource_profile = "cpu-standard"
+cpus = 4
+memory_mb = 4096
+storage_mb = 10240
+gpus = 0
+agent_timeout_sec = 7200
+verifier_timeout_sec = 1200
+
+[matrix]
+environment = "docker"
+n_concurrent = 1
+
+[[matrix.runs]]
+name = "oracle"
+agent = "oracle"
+attempts = 5
+
+[[matrix.runs]]
+name = "negative-control"
+agent = "nop"
+attempts = 1
+
+[[matrix.runs]]
+name = "codex"
+agent = "codex"
+model = "openai/gpt-5.6-sol"
+attempts = 3
+
+[resource_profiles.cpu-standard]
+instance_types = ["m7i.xlarge", "c7i.xlarge"]
+root_volume_gb = 40
+requires_gpu_ami = false
+
+[resource_profiles.memory-standard]
+instance_types = ["r7i.xlarge"]
+root_volume_gb = 80
+requires_gpu_ami = false
+
+[resource_profiles.gpu-standard]
+instance_types = ["g6.xlarge"]
+root_volume_gb = 100
+requires_gpu_ami = true

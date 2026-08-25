@@ -1,0 +1,29 @@
+name: validate-task-contribution
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tasks/**"
+      - ".github/workflows/validate-task.yml"
+      - "scripts/validate_task.py"
+      - ".github/pull_request_template.md"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  task-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Harbor task layout and proposal reference
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python scripts/validate_task.py --base "${{ github.event.pull_request.base.sha }}" --head "${{ github.event.pull_request.head.sha }}"
