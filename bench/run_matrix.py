@@ -16,6 +16,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "bench" / "ai4sbench.toml"
 RESULTS_DIR = ROOT / "results"
+UPSTREAM_DIR = ROOT / "references" / "terminal-bench-science"
 
 
 def load_manifest() -> dict[str, Any]:
@@ -30,7 +31,7 @@ def harbor_command() -> list[str] | None:
 
 def task_path(manifest: dict[str, Any]) -> Path:
     task = manifest["tasks"][0]
-    return ROOT / "references" / "terminal-bench-science" / task["path"]
+    return UPSTREAM_DIR / task["path"]
 
 
 def codex_auth_path() -> Path:
@@ -51,6 +52,14 @@ def run_probe(command: list[str]) -> tuple[bool, str]:
         return False, str(exc)
     output = (completed.stdout or completed.stderr).strip()
     return completed.returncode == 0, output[-500:]
+
+
+def checkout_commit(checkout: Path) -> str | None:
+    # An uninitialized submodule is an empty directory, where git would report the parent repository's HEAD.
+    if not (checkout / ".git").exists():
+        return None
+    ok, output = run_probe(["git", "-C", str(checkout), "rev-parse", "HEAD"])
+    return output if ok else None
 
 
 def nft_fib_inet_enabled(config: str) -> bool:
@@ -110,6 +119,9 @@ def preflight(manifest: dict[str, Any], require_codex: bool = True) -> dict[str,
             else f"expected prebuilt harbor=={expected_harbor}; got: {version_output or 'unknown'}"
         )
 
+    pinned_commit = manifest["upstreams"][manifest["tasks"][0]["source"]]["commit"]
+    checked_out_commit = checkout_commit(UPSTREAM_DIR)
+
     task = task_path(manifest)
     required_task_files = (Path("task.toml"), Path("instruction.md"), Path("environment/Dockerfile"))
     task_ok = all((task / name).is_file() for name in required_task_files)
@@ -128,6 +140,10 @@ def preflight(manifest: dict[str, Any], require_codex: bool = True) -> dict[str,
         "docker": {"ok": docker_ok, "detail": docker_detail},
         "harbor": {"ok": harbor_ok, "detail": harbor_detail},
         "pinned_task": {"ok": task_ok, "detail": str(task)},
+        "pinned_commit": {
+            "ok": checked_out_commit == pinned_commit,
+            "detail": f"{UPSTREAM_DIR} is at {checked_out_commit or 'no git checkout'}; manifest pins {pinned_commit}",
+        },
         "task_line_endings": {"ok": line_endings_ok, "detail": line_endings_detail},
         "docker_network_policy": {"ok": network_ok, "detail": network_detail},
         "disk": {"ok": free_gb >= 15, "detail": f"{free_gb:.1f} GiB free; 15 GiB required"},
@@ -144,6 +160,31 @@ def selected_runs(manifest: dict[str, Any], phase: str) -> list[dict[str, Any]]:
     if phase == "all":
         return runs
     return [item for item in runs if item["name"] == phase]
+
+
+def trial_outcomes(job_dir: Path) -> list[dict[str, Any]]:
+    outcomes: list[dict[str, Any]] = []
+    for result_path in sorted(job_dir.glob("*/result.json")):
+        trial = json.loads(result_path.read_text(encoding="utf-8"))
+        rewards = (trial.get("verifier_result") or {}).get("rewards") or {}
+        exception = trial.get("exception_info") or {}
+        outcomes.append(
+            {
+                "trial": result_path.parent.name,
+                "reward": rewards.get("reward"),
+                "exception": exception.get("exception_type"),
+            }
+        )
+    return outcomes
+
+
+def meets_expectation(item: dict[str, Any], trials: list[dict[str, Any]]) -> bool:
+    expected = item.get("expected_reward")
+    if expected is None:
+        return True
+    return len(trials) == item["attempts"] and all(
+        trial["exception"] is None and trial["reward"] == expected for trial in trials
+    )
 
 
 def execute(manifest: dict[str, Any], phase: str) -> int:
@@ -193,6 +234,8 @@ def execute(manifest: dict[str, Any], phase: str) -> int:
             command.extend(["-m", item["model"]])
         print(f"Running {item['name']}: {item['attempts']} attempt(s)", flush=True)
         completed = subprocess.run(command, cwd=ROOT, check=False)
+        # `harbor run` exits 0 even when every trial scores 0, so gate on the recorded rewards.
+        trials = trial_outcomes(matrix_dir / job_name)
         records.append(
             {
                 "name": item["name"],
@@ -200,10 +243,13 @@ def execute(manifest: dict[str, Any], phase: str) -> int:
                 "model": item.get("model"),
                 "attempts": item["attempts"],
                 "exit_code": completed.returncode,
+                "expected_reward": item.get("expected_reward"),
+                "trials": trials,
+                "met_expectation": meets_expectation(item, trials),
                 "job_dir": str(matrix_dir / job_name),
             }
         )
-        if completed.returncode != 0:
+        if completed.returncode != 0 or not records[-1]["met_expectation"]:
             break
 
     summary = {
@@ -214,7 +260,8 @@ def execute(manifest: dict[str, Any], phase: str) -> int:
         "upstreams": manifest["upstreams"],
         "runtime": manifest["runtime"],
         "runs": records,
-        "passed": len(records) == len(runs) and all(item["exit_code"] == 0 for item in records),
+        "passed": len(records) == len(runs)
+        and all(item["exit_code"] == 0 and item["met_expectation"] for item in records),
     }
     (matrix_dir / "matrix-summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
