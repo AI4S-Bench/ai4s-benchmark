@@ -31,11 +31,13 @@ n_concurrent = 1
 name = "oracle"
 agent = "oracle"
 attempts = 5
+expected_reward = 1.0
 
 [[matrix.runs]]
 name = "negative-control"
 agent = "nop"
 attempts = 1
+expected_reward = 0.0
 
 [[matrix.runs]]
 name = "codex"

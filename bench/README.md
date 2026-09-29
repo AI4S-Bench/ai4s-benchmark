@@ -37,7 +37,7 @@ is deliberately a real benchmark task, not a hello-world fixture.
 bench/
   ai4sbench.toml       catalog, pins, task resources, validation matrix
   run_matrix.py        fail-closed preflight and reproducible Harbor runner
-references/            shallow upstream checkouts; ignored by git
+references/            upstream git submodules at the commits pinned in ai4sbench.toml
 results/               Harbor jobs and matrix summaries; ignored by git
 ```
 
@@ -45,18 +45,25 @@ results/               Harbor jobs and matrix summaries; ignored by git
 
 ```powershell
 cd benchmark-repository
+git submodule update --init references/terminal-bench-science
 uv run --no-project --python 3.12 bench/run_matrix.py preflight
 uv run --no-project --python 3.12 bench/run_matrix.py run --phase oracle
 uv run --no-project --python 3.12 bench/run_matrix.py run --phase all
 ```
 
 `run --phase all` executes five oracle attempts, one `nop` negative control,
-and three Codex attempts. It refuses to start if Docker, Harbor, the pinned task,
-free disk, or Codex authentication is unavailable. To use Codex subscription
+and three Codex attempts. It refuses to start if Docker, Harbor, the pinned task
+at its pinned commit, free disk, or Codex authentication is unavailable.
+`harbor run` exits 0 whatever the trials score, so the runner reads each trial's
+`result.json`: the matrix passes only if every oracle trial scores `1.0` and the
+negative control scores `0.0` (`expected_reward` in the manifest), with no trial
+exceptions. Codex rewards are recorded but not gated. The runner stops at the
+first run that misses its expectation. To use Codex subscription
 authentication without exporting an API key, set `CODEX_FORCE_AUTH_JSON=1` and
 let Harbor copy the local `~/.codex/auth.json` into the isolated agent container.
 
 The upstream task is not copied into this repository. The pin and path are
-recorded in the manifest and the runner executes the sparse checkout under
-`references/terminal-bench-science`. This keeps upstream provenance intact and
+recorded in the manifest and the runner executes the submodule checkout under
+`references/terminal-bench-science`; preflight fails unless that checkout is at
+the manifest commit. This keeps upstream provenance intact and
 avoids silently diverging from its verifier.
