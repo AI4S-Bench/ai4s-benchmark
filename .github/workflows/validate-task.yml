@@ -3,6 +3,8 @@ name: validate-task-contribution
 on:
   pull_request:
     branches: [main]
+    # `edited` re-runs the check when a contributor adds the Discussion link to the PR body.
+    types: [opened, edited, reopened, synchronize]
     paths:
       - "tasks/**"
       - ".github/workflows/validate-task.yml"

@@ -17,8 +17,16 @@ tasks/<domain>/<field>/<task-slug>/
 └── tests/test.sh
 ```
 
-The PR check validates the layout, `[metadata]` in `task.toml`, and the approved
-Discussion link. It does not replace executing the oracle and verifier.
+`tests/test.sh` must write the trial's reward (for example `1` or `0`) to
+`/logs/verifier/reward.txt`, or a JSON object to `/logs/verifier/reward.json`.
+Harbor ignores the script's exit code and errors the trial if neither file exists.
+If `task.toml` has a `[task]` table, its `name` must be an `org/name` package
+name such as `ai4sbench/<task-slug>`; Harbor refuses to load the task otherwise.
+
+The PR check validates the layout, that `task.toml` is valid TOML with a
+`[metadata]` table and (if present) an `org/name` `[task].name`, and that the
+PR body links a Discussion in this repository. It does not replace executing
+the oracle and verifier.
 
 ## Reference example
 
