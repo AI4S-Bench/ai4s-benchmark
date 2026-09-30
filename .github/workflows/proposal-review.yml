@@ -1,0 +1,54 @@
+name: Proposal Review
+
+on:
+  discussion:
+    types: [created]
+  discussion_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      discussion_number:
+        description: Task Proposals Discussion number
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  discussions: read
+
+concurrency:
+  group: proposal-review-${{ github.repository }}-${{ github.event.discussion.number || inputs.discussion_number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.discussion.category.name == 'Task Proposals' &&
+       (github.event_name == 'discussion' || startsWith(github.event.comment.body, '/review')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - name: Review and submit to the backend
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          AI_REVIEW_SERVICE_KEY: ${{ secrets.AI_REVIEW_SERVICE_KEY }}
+          AI_REVIEW_BACKEND_URL: ${{ vars.AI_REVIEW_BACKEND_URL }}
+        run: python ci_checks/proposal_review.py
+      - name: Preserve review and callback diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proposal-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: review-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
