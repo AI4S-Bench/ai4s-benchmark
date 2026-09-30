@@ -55,6 +55,7 @@ class SDKTests(unittest.TestCase):
                                if not any(part in key.upper() for part in ("KEY", "TOKEN", "SECRET"))}
                 environment.update(OPENAI_API_KEY="offline-test-key",
                                    OPENAI_BASE_URL=f"http://127.0.0.1:{server.server_port}/v1",
+                                   RUBRIC_MAX_TOKENS_PARAMETER="max_tokens",
                                    PYTHONUTF8="1", NO_PROXY="127.0.0.1,localhost")
                 model = json.loads((ROOT / ".github/llm-config.json").read_text())["proposal_review"]["model"]
                 completed = subprocess.run(
@@ -70,6 +71,7 @@ class SDKTests(unittest.TestCase):
                 self.assertEqual(len(requests), 2)
                 for request in requests:
                     self.assertEqual(request["model"], model)
+                    self.assertEqual(request["max_tokens"], 4096)
                     self.assertNotIn("tools", request)
                 self.assertNotIn("Synthetic Author", requests[0]["messages"][1]["content"])
                 self.assertIn("Synthetic Author", requests[1]["messages"][1]["content"])

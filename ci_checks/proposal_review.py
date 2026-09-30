@@ -27,6 +27,29 @@ FIELD_LIMITS = {
 }
 
 
+def validate_model_config(config):
+    """Only repository-owned configuration chooses where the model key is sent."""
+    provider = config.get("llm_provider")
+    if provider not in {"openrouter", "openai_compatible"}:
+        raise ValueError("Unsupported model provider; an adapter is required")
+    model = config.get("model")
+    if not isinstance(model, str) or not model.strip() or len(model) > 200:
+        raise ValueError("Configure a model ID")
+    endpoint = urllib.parse.urlsplit(config.get("base_url", ""))
+    if (endpoint.scheme != "https" or not endpoint.hostname or endpoint.username
+            or endpoint.password or endpoint.query or endpoint.fragment):
+        raise ValueError("Configure an HTTPS model base URL without credentials or query parameters")
+    if provider == "openrouter" and config["base_url"].rstrip("/") != "https://openrouter.ai/api/v1":
+        raise ValueError("Unexpected OpenRouter endpoint")
+    free_only = config.get("require_free_model", False)
+    if not isinstance(free_only, bool):
+        raise ValueError("require_free_model must be a boolean")
+    if free_only and (provider != "openrouter" or not model.endswith(":free")):
+        raise ValueError("Free-only policy requires an OpenRouter :free model")
+    if config.get("max_tokens_parameter", "max_tokens") not in {"max_tokens", "max_completion_tokens"}:
+        raise ValueError("Unsupported completion token parameter")
+
+
 def validate_result(result):
     """Reject malformed output before it can turn into a backend 422 response."""
     if (not isinstance(result, dict) or not isinstance(result.get("decision"), str)
@@ -119,11 +142,17 @@ def resolve_discussion(event_name, event, repo, token):
 
 
 def run_review(proposal, config):
+    validate_model_config(config)
+    api_key = os.environ.get("LLM_API_KEY", "")
+    if not api_key:
+        raise ValueError("Configure LLM_API_KEY for the selected endpoint")
     environment = dict(os.environ)
-    for key in ("AI_REVIEW_SERVICE_KEY", "GH_TOKEN", "GITHUB_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL"):
+    for key in ("AI_REVIEW_SERVICE_KEY", "GH_TOKEN", "GITHUB_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL",
+                "LLM_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "OPENAI_BASE_URL"):
         environment.pop(key, None)
-    environment["OPENAI_API_KEY"] = environment.pop("OPENROUTER_API_KEY")
+    environment["OPENAI_API_KEY"] = api_key
     environment["OPENAI_BASE_URL"] = config["base_url"]
+    environment["RUBRIC_MAX_TOKENS_PARAMETER"] = config.get("max_tokens_parameter", "max_tokens")
     environment["PYTHONIOENCODING"] = "utf-8"
     command = ["uv", "run", "--locked", "--script", str(ROOT / "ci_checks/rubric_review.py"),
                "--model", f"openai/{config['model']}", "--author-fit", "--author-fit-model", f"openai/{config['model']}", str(proposal)]
@@ -131,7 +160,7 @@ def run_review(proposal, config):
                                text=True, encoding="utf-8", timeout=360, check=False)
     # Upstream stderr may contain SDK errors; remove credentials before retaining diagnostics.
     log = completed.stderr
-    for key in ("OPENAI_API_KEY", "AI_REVIEW_SERVICE_KEY", "GH_TOKEN", "GITHUB_TOKEN"):
+    for key in ("OPENAI_API_KEY", "LLM_API_KEY", "OPENROUTER_API_KEY", "AI_REVIEW_SERVICE_KEY", "GH_TOKEN", "GITHUB_TOKEN"):
         secret = environment.get(key) or os.environ.get(key)
         if secret:
             log = log.replace(secret, "[REDACTED]")
@@ -150,10 +179,7 @@ def main():
         print("Trigger does not request an authorized proposal review.")
         return
     config = json.loads((ROOT / ".github/llm-config.json").read_text(encoding="utf-8"))["proposal_review"]
-    if config["llm_provider"] != "openrouter" or not config["model"].endswith(":free"):
-        raise ValueError("Only the configured free OpenRouter model is allowed")
-    if config["base_url"] != "https://openrouter.ai/api/v1":
-        raise ValueError("Unexpected model provider endpoint")
+    validate_model_config(config)
     base_url = os.environ.get("AI_REVIEW_BACKEND_URL", "").rstrip("/")
     parsed_url = urllib.parse.urlsplit(base_url)
     if (parsed_url.scheme != "https" or not parsed_url.hostname or parsed_url.username

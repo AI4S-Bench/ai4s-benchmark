@@ -12,6 +12,51 @@ import proposal_review as workflow
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_sponsored_compatible_endpoint_uses_configured_model_and_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proposal = Path(directory) / "proposal.md"
+            proposal.write_text("Synthetic proposal", encoding="utf-8")
+            config = {"llm_provider": "openai_compatible", "base_url": "https://sponsor.example/v1",
+                      "model": "sponsor-model", "require_free_model": False,
+                      "max_tokens_parameter": "max_completion_tokens"}
+            process = subprocess.CompletedProcess([], 0, '{"decision":"Uncertain","review":"Text"}', "sponsor-key")
+            with (patch.dict(os.environ, {"LLM_API_KEY": "sponsor-key", "OPENAI_API_KEY": "old-key",
+                                         "OPENROUTER_API_KEY": "old-router-key"}),
+                  patch.object(workflow.subprocess, "run", return_value=process) as run):
+                workflow.run_review(proposal, config)
+            env = run.call_args.kwargs["env"]
+            self.assertEqual(env["OPENAI_API_KEY"], "sponsor-key")
+            self.assertEqual(env["OPENAI_BASE_URL"], "https://sponsor.example/v1")
+            self.assertEqual(env["RUBRIC_MAX_TOKENS_PARAMETER"], "max_completion_tokens")
+            self.assertNotIn("LLM_API_KEY", env)
+            self.assertNotIn("OPENROUTER_API_KEY", env)
+            self.assertEqual(run.call_args.args[0].count("openai/sponsor-model"), 2)
+            self.assertNotIn("sponsor-key", (Path(directory) / "review.log").read_text())
+
+    def test_free_model_policy_is_optional_and_explicit(self):
+        config = {"llm_provider": "openrouter", "base_url": "https://openrouter.ai/api/v1",
+                  "model": "vendor/paid-model", "require_free_model": True}
+        with self.assertRaises(ValueError):
+            workflow.validate_model_config(config)
+        config["require_free_model"] = False
+        workflow.validate_model_config(config)
+
+    def test_unknown_provider_and_invalid_endpoint_are_rejected_before_call(self):
+        base = {"llm_provider": "openai_compatible", "base_url": "https://sponsor.example/v1", "model": "model"}
+        for change in ({"llm_provider": "bedrock"}, {"base_url": "http://sponsor.example/v1"},
+                       {"base_url": "https://key@sponsor.example/v1"}, {"base_url": "https://sponsor.example/v1?key=value"},
+                       {"model": ""}, {"require_free_model": "false"}, {"max_tokens_parameter": "unsupported"}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                workflow.validate_model_config(base | change)
+
+    def test_missing_generic_key_does_not_reuse_other_provider_credentials(self):
+        with (patch.dict(os.environ, {"OPENROUTER_API_KEY": "old-key"}, clear=True),
+              patch.object(workflow.subprocess, "run") as run):
+            with self.assertRaises(ValueError):
+                workflow.run_review(Path("unused"), {"llm_provider": "openai_compatible",
+                    "base_url": "https://sponsor.example/v1", "model": "sponsor-model"})
+        run.assert_not_called()
+
     def event(self, comment="/review"):
         return {"action": "created", "discussion": {"number": 33, "category": {"name": "Task Proposals"}},
                 "comment": {"body": comment, "user": {"login": "member"}}}
@@ -37,10 +82,10 @@ class WorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             proposal = Path(directory) / "proposal.md"
             proposal.write_text("# proposal")
-            config = {"base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.8-27b:free"}
+            config = {"llm_provider": "openrouter", "base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.8-27b:free"}
             result = {"decision": "Accept", "review": "Scientific review", "author_fit": None, "task": "path"}
             process = subprocess.CompletedProcess([], 0, json.dumps(result), "api-key")
-            with (patch.dict(os.environ, {"OPENROUTER_API_KEY": "api-key", "AI_REVIEW_SERVICE_KEY": "internal-secret", "GH_TOKEN": "github-secret"}),
+            with (patch.dict(os.environ, {"LLM_API_KEY": "api-key", "AI_REVIEW_SERVICE_KEY": "internal-secret", "GH_TOKEN": "github-secret"}),
                   patch.object(workflow.subprocess, "run", return_value=process) as run):
                 actual = workflow.run_review(proposal, config)
             self.assertNotIn("task", actual)
@@ -71,7 +116,7 @@ class WorkflowTests(unittest.TestCase):
         response.choices[0].finish_reason = "stop"
         response.choices[0].message.content = "Decision: Uncertain"
         with (patch.dict(sys.modules, {"openai": openai}),
-              patch.dict(os.environ, {"OPENAI_BASE_URL": "https://openrouter.ai/api/v1"})):
+              patch.dict(os.environ, {"OPENAI_BASE_URL": "https://openrouter.ai/api/v1", "RUBRIC_MAX_TOKENS_PARAMETER": "max_tokens"})):
             self.assertEqual(module.call_openai("rubric", "proposal", "openai/qwen/qwen3.8-27b:free"),
                              "Decision: Uncertain")
         kwargs = openai.OpenAI.return_value.chat.completions.create.call_args.kwargs
@@ -227,10 +272,10 @@ class WorkflowTests(unittest.TestCase):
             proposal = Path(directory) / "proposal.md"
             proposal.write_text("proposal")
             process = subprocess.CompletedProcess([], 0, '{"decision":null,"review":"Unparseable"}', "")
-            with (patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}),
+            with (patch.dict(os.environ, {"LLM_API_KEY": "test-key"}),
                   patch.object(workflow.subprocess, "run", return_value=process)):
                 with self.assertRaises(ValueError):
-                    workflow.run_review(proposal, {"base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.8-27b:free"})
+                    workflow.run_review(proposal, {"llm_provider": "openrouter", "base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.8-27b:free"})
 
 
 if __name__ == "__main__":

@@ -266,18 +266,18 @@ def call_openai(system: str, user: str | list, model: str) -> str:
 
     client = openai.OpenAI(timeout=90, max_retries=2)
     content = _anthropic_blocks_to_openai(user)
-    # AI4S: keep the original conservative input budget even when the selected
-    # free model has a larger context window.
+    # AI4S: keep a conservative input budget across configured providers.
     if len(system.encode("utf-8")) + len(str(content).encode("utf-8")) > 28_000:
-        raise ValueError("Proposal plus rubric exceeds the free review input budget")
+        raise ValueError("Proposal plus rubric exceeds the review input budget")
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": content},
     ]
     bare = _strip_provider_prefix(model)
-    token_limit = ({"max_tokens": 4096}
-                   if os.environ.get("OPENAI_BASE_URL", "").rstrip("/") == "https://openrouter.ai/api/v1"
-                   else {"max_completion_tokens": 4096})
+    token_parameter = os.environ.get("RUBRIC_MAX_TOKENS_PARAMETER", "max_completion_tokens")
+    if token_parameter not in {"max_tokens", "max_completion_tokens"}:
+        raise ValueError("Unsupported completion token parameter")
+    token_limit = {token_parameter: 4096}
     try:
         resp = client.chat.completions.create(
             model=bare, messages=messages, **token_limit,
