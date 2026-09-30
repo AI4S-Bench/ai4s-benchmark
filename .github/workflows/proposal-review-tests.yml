@@ -1,0 +1,33 @@
+name: Proposal Review Tests
+
+on:
+  pull_request:
+    paths:
+      - 'ci_checks/**'
+      - 'rubrics/**'
+      - '.github/llm-config.json'
+      - '.github/workflows/proposal-review*.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ci_checks/**'
+      - 'rubrics/**'
+      - '.github/llm-config.json'
+      - '.github/workflows/proposal-review*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - name: Check locked runner dependencies without calling a model
+        run: uv run --locked --script ci_checks/rubric_review.py --help
+      - name: Test triggers, callbacks and the two-pass SDK flow offline
+        run: python -m unittest discover -s ci_checks -p 'test_*.py'

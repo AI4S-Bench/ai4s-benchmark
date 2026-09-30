@@ -1,0 +1,8 @@
+{
+  "proposal_review": {
+    "llm_provider": "openrouter",
+    "model": "qwen/qwen3.8-27b:free",
+    "base_url": "https://openrouter.ai/api/v1",
+    "upstream_sha": "f55c14ea065243c8d094e02c0aa156d5fd22fdd4"
+  }
+}
