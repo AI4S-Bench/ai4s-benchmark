@@ -22,6 +22,5 @@ The temporary free test model is `qwen/qwen3.8-27b:free`; the original planned
 `z-ai/glm-5.2:free` was absent from the public OpenRouter catalog when rechecked
 on 2026-09-30 UTC. This changes the model configuration, not either rubric.
 The helper also supports explicitly configured OpenAI-compatible endpoints with
-the generic `LLM_API_KEY` secret. The free-only policy is optional. Sponsor AWS
-integration awaits its API/authentication contract; native Bedrock is not yet
-implemented.
+the generic `LLM_API_KEY` secret. The free-only policy is optional. Sponsor
+integration awaits confirmation of its API and authentication requirements.

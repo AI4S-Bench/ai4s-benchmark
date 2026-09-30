@@ -66,10 +66,9 @@ Use `max_completion_tokens` instead if required by the endpoint. Configuration i
 read from trusted default-branch code, never proposal text. Changing the model
 provider does not change the backend API, rubrics or publication flow.
 
-The sponsor's AWS API contract is not yet confirmed. Native Amazon Bedrock is
-**not implemented by this PR** and cannot be selected just by changing the base
-URL. Once the service, model ID, region/endpoint and authentication requirements
-are known, add the appropriate provider adapter and workflow authentication.
+The sponsor's API contract is not yet confirmed. Once the model ID, endpoint
+and authentication requirements are known, configure the integration and add
+any required provider adapter or workflow authentication.
 Unknown providers fail explicitly instead of falling back to OpenRouter.
 
 ### Tests
