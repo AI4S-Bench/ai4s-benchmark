@@ -1,4 +1,4 @@
-<!-- Adapted for AI4S-Bench: benchmark identity updated. Upstream source and license: ../ci_checks/UPSTREAM.md and ../ci_checks/TBS-LICENSE. -->
+<!-- Adapted from harbor-framework/terminal-bench-science at f55c14ea065243c8d094e02c0aa156d5fd22fdd4 for AI4S-Bench: benchmark identity updated. License: ../ci_checks/LICENSE. -->
 
 # Author–Task Fit Review
 

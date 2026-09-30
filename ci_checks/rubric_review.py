@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Adapted from harbor-framework/terminal-bench-science at
+# f55c14ea065243c8d094e02c0aa156d5fd22fdd4; Apache-2.0 (see LICENSE).
+# AI4S changes: text-only input, UTF-8 reads, input limits, SDK timeouts,
+# configurable completion-token parameter, and output validation.
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["anthropic", "openai", "httpx"]
