@@ -281,15 +281,19 @@ def call_openai(system: str, user: str | list, model: str) -> str:
     token_parameter = os.environ.get("RUBRIC_MAX_TOKENS_PARAMETER", "max_completion_tokens")
     if token_parameter not in {"max_tokens", "max_completion_tokens"}:
         raise ValueError("Unsupported completion token parameter")
-    token_limit = {token_parameter: 4096}
+    token_limit = {token_parameter: 8192}
+    provider_options = (
+        {"extra_body": {"reasoning": {"effort": "low"}}}
+        if "openrouter.ai" in os.environ.get("OPENAI_BASE_URL", "") else {}
+    )
     try:
         resp = client.chat.completions.create(
-            model=bare, messages=messages, **token_limit,
+            model=bare, messages=messages, **token_limit, **provider_options,
         )
     except (openai.BadRequestError, TypeError):
         # Older surface / proxy that only knows max_tokens.
         resp = client.chat.completions.create(
-            model=bare, messages=messages, max_tokens=4096,
+            model=bare, messages=messages, max_tokens=8192, **provider_options,
         )
     if resp.choices[0].finish_reason != "stop" or not resp.choices[0].message.content:
         raise ValueError("Model returned empty, refused or truncated review output")
