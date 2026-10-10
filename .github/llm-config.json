@@ -1,7 +1,7 @@
 {
   "proposal_review": {
     "llm_provider": "openrouter",
-    "model": "google/gemma-4-31b-it:free",
+    "model": "nvidia/nemotron-3.5-lightning:free",
     "base_url": "https://openrouter.ai/api/v1",
     "require_free_model": true,
     "max_tokens_parameter": "max_tokens",
