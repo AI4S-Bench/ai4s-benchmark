@@ -121,7 +121,8 @@ class WorkflowTests(unittest.TestCase):
                              "Decision: Uncertain")
         kwargs = openai.OpenAI.return_value.chat.completions.create.call_args.kwargs
         self.assertEqual(kwargs["model"], "qwen/qwen3.8-27b:free")
-        self.assertEqual(kwargs["max_tokens"], 4096)
+        self.assertEqual(kwargs["max_tokens"], 8192)
+        self.assertEqual(kwargs["extra_body"], {"reasoning": {"effort": "low"}})
         self.assertNotIn("max_completion_tokens", kwargs)
 
     def test_completed_result_is_preserved_when_backend_is_unavailable(self):
