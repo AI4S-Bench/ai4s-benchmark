@@ -71,7 +71,7 @@ class SDKTests(unittest.TestCase):
                 self.assertEqual(len(requests), 2)
                 for request in requests:
                     self.assertEqual(request["model"], model)
-                    self.assertEqual(request["max_tokens"], 4096)
+                    self.assertEqual(request["max_tokens"], 8192)
                     self.assertNotIn("tools", request)
                 self.assertNotIn("Synthetic Author", requests[0]["messages"][1]["content"])
                 self.assertIn("Synthetic Author", requests[1]["messages"][1]["content"])
