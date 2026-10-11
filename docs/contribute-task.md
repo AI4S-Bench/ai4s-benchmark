@@ -7,7 +7,7 @@ alone is not approval.
 
 ## Build the task
 
-Place a task under `tasks/<domain>/<field>/<task-name>/`. Follow
+Place a task under `tasks/<domain>/<field>/<task-slug>/`. Follow
 [CONTRIBUTING.md](https://github.com/AI4S-Bench/ai4s-benchmark/blob/main/CONTRIBUTING.md)
 and include at least:
 
@@ -31,8 +31,8 @@ Install the pinned runtime described in
 then run Harbor from the repository root:
 
 ```bash
-harbor run -p tasks/<domain>/<field>/<task-name> -a oracle -e docker
-harbor run -p tasks/<domain>/<field>/<task-name> -a nop -e docker
+harbor run -p tasks/<domain>/<field>/<task-slug> -a oracle -e docker
+harbor run -p tasks/<domain>/<field>/<task-slug> -a nop -e docker
 ```
 
 Open a PR against `AI4S-Bench/ai4s-benchmark` with a summary of the task,
