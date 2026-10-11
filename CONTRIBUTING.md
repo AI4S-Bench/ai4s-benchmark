@@ -23,10 +23,13 @@ Harbor ignores the script's exit code and errors the trial if neither file exist
 If `task.toml` has a `[task]` table, its `name` must be an `org/name` package
 name such as `ai4sbench/<task-slug>`; Harbor refuses to load the task otherwise.
 
-The PR check validates the layout, that `task.toml` is valid TOML with a
-`[metadata]` table and (if present) an `org/name` `[task].name`, and that the
-PR body links a Discussion in this repository. It does not replace executing
-the oracle and verifier.
+The PR check validates the layout and that `task.toml` is valid TOML with a
+`[metadata]` table and (if present) an `org/name` `[task].name`. For a **new**
+task, the PR body must link an approved Discussion in this repository. Repairs
+to an existing task do not require a new proposal, but should explain the
+problem and the evidence for the fix. The check verifies the link's format;
+maintainers confirm the human approval. It does not replace executing the
+oracle and verifier.
 
 ## Reference example
 

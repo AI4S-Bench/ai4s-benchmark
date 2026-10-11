@@ -32,6 +32,14 @@ def changed_task_roots(base: str, head: str) -> set[Path]:
     return roots
 
 
+def is_new_task(merge_base: str, root: Path) -> bool:
+    """A proposal is required for a new task, not a repair to an existing one."""
+    task_config = f"{merge_base}:{(root / 'task.toml').as_posix()}"
+    return subprocess.run(
+        ["git", "cat-file", "-e", task_config], capture_output=True, check=False
+    ).returncode != 0
+
+
 def task_toml_errors(path: Path) -> list[str]:
     try:
         config = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -58,14 +66,21 @@ def main() -> None:
     if not task_roots:
         print("No task directory changed; structural task checks are not required.")
         return
-    body = os.environ.get("PR_BODY", "")
-    repository = os.environ.get("GITHUB_REPOSITORY", "AI4S-Bench/ai4s-benchmark")
-    discussion = re.compile(rf"https://github\.com/{re.escape(repository)}/discussions/\d+", re.IGNORECASE)
-    if not discussion.search(body):
-        raise SystemExit(
-            "Task PR body must link its approved Task Proposal Discussion: "
-            f"https://github.com/{repository}/discussions/<number>"
+    merge_base = subprocess.run(
+        ["git", "merge-base", args.base, args.head], check=True, capture_output=True, text=True
+    ).stdout.strip()
+    new_tasks = {root for root in task_roots if is_new_task(merge_base, root)}
+    if new_tasks:
+        body = os.environ.get("PR_BODY", "")
+        repository = os.environ.get("GITHUB_REPOSITORY", "AI4S-Bench/ai4s-benchmark")
+        discussion = re.compile(
+            rf"https://github\.com/{re.escape(repository)}/discussions/\d+", re.IGNORECASE
         )
+        if not discussion.search(body):
+            raise SystemExit(
+                "New task PR body must link its approved Task Proposal Discussion: "
+                f"https://github.com/{repository}/discussions/<number>"
+            )
     failures: list[str] = []
     for root in sorted(task_roots):
         missing = [str(root / file) for file in REQUIRED_FILES if not (root / file).is_file()]
@@ -75,7 +90,7 @@ def main() -> None:
             failures.extend(task_toml_errors(root / "task.toml"))
     if failures:
         raise SystemExit("\n".join(failures))
-    print(f"Validated {len(task_roots)} task contribution(s).")
+    print(f"Validated {len(task_roots)} task contribution(s), including {len(new_tasks)} new task(s).")
 
 
 if __name__ == "__main__":

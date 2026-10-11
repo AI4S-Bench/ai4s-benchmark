@@ -78,6 +78,19 @@ def test_discussion_link_must_point_at_this_repository(tmp_path: Path) -> None:
     assert validate(tmp_path, base, head, body="Link to /discussions/ follows.").returncode != 0
 
 
+def test_existing_task_repair_does_not_require_a_new_proposal(tmp_path: Path) -> None:
+    init_repository(tmp_path)
+    root = tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation"
+    task_files(root)
+    base = commit_all(tmp_path, "existing task")
+    (root / "instruction.md").write_text("Clarified scientific instructions.\n", encoding="utf-8")
+    head = commit_all(tmp_path, "repair existing task")
+
+    result = validate(tmp_path, base, head, body="Maintenance PR without a proposal")
+    assert result.returncode == 0, result.stderr
+    assert "0 new task(s)" in result.stdout
+
+
 def test_task_toml_must_parse_and_name_a_harbor_package(tmp_path: Path) -> None:
     task_toml = tmp_path / "task.toml"
 
