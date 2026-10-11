@@ -104,9 +104,20 @@ def test_task_toml_must_parse_and_name_a_harbor_package(tmp_path: Path) -> None:
     assert validate_task.task_toml_errors(task_toml) == []
 
 
-def test_repository_example_task_is_a_valid_harbor_task() -> None:
+def run_example_scripts(root: Path, *scripts: str) -> str:
+    """Run example task scripts with the container's /workspace and /logs redirected under root."""
+    (root / "workspace").mkdir(parents=True)
+    for script in scripts:
+        text = (EXAMPLE_TASK / script).read_text(encoding="utf-8")
+        text = text.replace("/workspace", str(root / "workspace")).replace("/logs", str(root / "logs"))
+        subprocess.run(["sh", "-c", text], check=True)
+    return (root / "logs" / "verifier" / "reward.txt").read_text(encoding="utf-8").strip()
+
+
+def test_repository_example_task_is_a_valid_harbor_task(tmp_path: Path) -> None:
     assert validate_task.task_toml_errors(EXAMPLE_TASK / "task.toml") == []
-    assert "/logs/verifier/reward.txt" in (EXAMPLE_TASK / "tests" / "test.sh").read_text(encoding="utf-8")
+    assert run_example_scripts(tmp_path / "nop", "tests/test.sh") == "0"
+    assert run_example_scripts(tmp_path / "oracle", "solution/solve.sh", "tests/test.sh") == "1"
 
 
 def test_files_directly_under_a_field_are_not_tasks(tmp_path: Path) -> None:
