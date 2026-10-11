@@ -17,7 +17,8 @@ tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example
 └── tests/test.sh
 ```
 
-`task.toml` declares `[task].name = "ai4sbench/amr-poisson-contribution-example"`.
+`task.toml` has the `[metadata]` table that CI requires and declares
+`[task].name = "ai4sbench/amr-poisson-contribution-example"`.
 `instruction.md` specifies the output. The Dockerfile provides the runtime,
 `solution/solve.sh` is the Oracle, and `tests/test.sh` writes `1` or `0` to
 `/logs/verifier/reward.txt` after checking the output.

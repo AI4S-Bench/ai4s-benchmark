@@ -13,7 +13,7 @@ and include at least:
 
 | File | Purpose |
 | --- | --- |
-| `task.toml` | Harbor task metadata, including `[task].name` |
+| `task.toml` | Harbor task metadata: a `[metadata]` table (required by CI) and `[task].name` |
 | `instruction.md` | Instructions visible to the agent |
 | `environment/Dockerfile` | Reproducible execution environment |
 | `solution/solve.sh` | Oracle solution |
@@ -37,9 +37,9 @@ harbor run -p tasks/<domain>/<field>/<task-name> -a nop -e docker
 
 Open a PR against `AI4S-Bench/ai4s-benchmark` with a summary of the task,
 the **human-approved proposal Discussion URL**, the validation commands,
-and the observed rewards. CI checks the directory structure and Discussion
-link format. Maintainers verify the proposal's actual human approval and
-review the task behavior.
+and the observed rewards. CI checks the directory structure, the `[metadata]`
+table in `task.toml`, and the Discussion link format. Maintainers verify the
+proposal's actual human approval and review the task behavior.
 
 If your PR only repairs an existing task, say so in its description. A
 maintenance PR does not require a new proposal link, but should explain the
