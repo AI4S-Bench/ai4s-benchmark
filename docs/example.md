@@ -40,13 +40,30 @@ between the intended solution and no solution.
 ## Describe your PR
 
 For a **new** task, include the URL of its human-approved GitHub Discussion.
-Use this outline, replacing the placeholder with the real approved proposal:
+Fill in the sections of the
+[PR template](https://github.com/AI4S-Bench/ai4s-benchmark/blob/main/.github/pull_request_template.md),
+replacing each placeholder:
 
-```text
-Summary: Add <task name> with instructions, environment, Oracle, and verifier.
-Approved proposal: https://github.com/AI4S-Bench/ai4s-benchmark/discussions/<number>
-Validation: harbor run -p <task path> -a oracle -e docker → reward 1.0
-            harbor run -p <task path> -a nop -e docker → reward 0.0
+```markdown
+## Task proposal (new tasks only)
+
+https://github.com/AI4S-Bench/ai4s-benchmark/discussions/<number>
+
+## Task summary
+
+Adds `tasks/<domain>/<field>/<task-slug>/`. <Research workflow, scientific
+domain and why it is hard.>
+
+Validation (Oracle reward 1.0, no-op reward 0.0):
+
+    harbor run -p tasks/<domain>/<field>/<task-slug> -a oracle -e docker
+    harbor run -p tasks/<domain>/<field>/<task-slug> -a nop -e docker
+
+## Contributor checklist
+
+- [x] For a new task, this PR adds exactly one task under `tasks/<domain>/<field>/<task-slug>/` with the required files.
+- [x] For a new task, the human-approved proposal Discussion link is above.
+- [x] I ran the relevant Oracle and verifier (or explained why I could not).
 ```
 
 The [PR that repaired this fixture](https://github.com/AI4S-Bench/ai4s-benchmark/pull/27)
