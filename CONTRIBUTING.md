@@ -20,6 +20,12 @@ tasks/<domain>/<field>/<task-slug>/
 `tests/test.sh` must write the trial's reward (for example `1` or `0`) to
 `/logs/verifier/reward.txt`, or a JSON object to `/logs/verifier/reward.json`.
 Harbor ignores the script's exit code and errors the trial if neither file exists.
+In the default shared verifier mode the agent can also write to `/logs/verifier`
+and Harbor reads `reward.json` before `reward.txt`, so delete both files before
+writing the reward, as the example task does; the stronger option, used by
+upstream `amr-poisson-optimize`, is `environment_mode = "separate"` under
+`[verifier]`, which grades the declared `artifacts` in a fresh container built
+from `tests/Dockerfile`.
 If `task.toml` has a `[task]` table, its `name` must be an `org/name` package
 name such as `ai4sbench/<task-slug>`; Harbor refuses to load the task otherwise.
 
