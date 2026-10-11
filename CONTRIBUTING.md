@@ -2,9 +2,9 @@
 
 ai4sbench follows the Terminal-Bench Science contribution sequence:
 
-1. Sign in to the contribution portal and submit the short scientific proposal form.
-2. The portal opens a GitHub Discussion in **Task Proposals**. A maintainer reviews the scope, provenance and reproducibility claim.
-3. After approval, open a PR that links the Discussion and adds one Harbor task.
+1. Sign in to the [contribution portal](https://ai4sbench.org/submit/) and submit the short scientific proposal form.
+2. The portal opens a GitHub Discussion in **Task Proposals**. AI review may post a recommendation; it is advice, not an approval. An authorized human reviewer publishes a structured review that approves the proposal, requests changes or rejects it.
+3. After human approval, open a PR that links the Discussion and adds one Harbor task.
 
 ## Required task layout
 
