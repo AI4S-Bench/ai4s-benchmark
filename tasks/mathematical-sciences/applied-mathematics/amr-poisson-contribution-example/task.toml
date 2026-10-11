@@ -10,3 +10,6 @@ upstream_reference = "https://github.com/harbor-framework/terminal-bench-science
 name = "ai4sbench/amr-poisson-contribution-example"
 description = "A schema-valid contribution fixture derived from the Terminal-Bench Science AMR Poisson task workflow."
 
+[agent]
+# The oracle writes one file in seconds; 10 minutes bounds a stuck agent run.
+timeout_sec = 600.0
