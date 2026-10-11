@@ -1,0 +1,14 @@
+site_name: AI4S-Bench Documentation
+site_url: https://dashboard.ai4sbench.org/document/
+repo_url: https://github.com/AI4S-Bench/ai4s-benchmark
+edit_uri: edit/main/docs/
+docs_dir: docs
+theme:
+  name: mkdocs
+nav:
+  - Overview: index.md
+  - Submit a Proposal: submit-proposal.md
+  - Apply to Review: apply-reviewer.md
+  - Review a Proposal: review-proposal.md
+  - Contribute a New Task: contribute-task.md
+  - Complete Example: example.md
