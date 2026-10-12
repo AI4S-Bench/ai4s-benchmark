@@ -19,6 +19,7 @@ permissions:
 concurrency:
   group: proposal-review-${{ github.repository }}-${{ github.event.discussion.number || inputs.discussion_number }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   review:
