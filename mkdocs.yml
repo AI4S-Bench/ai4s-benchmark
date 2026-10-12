@@ -4,7 +4,11 @@ repo_url: https://github.com/AI4S-Bench/ai4s-benchmark
 edit_uri: edit/main/docs/
 docs_dir: docs
 theme:
-  name: mkdocs
+  name: readthedocs
+  logo: assets/ai4s-bench-logo.svg
+  highlightjs: false
+extra_css:
+  - stylesheets/readthedocs.css
 nav:
   - Overview: index.md
   - Submit a Proposal: submit-proposal.md

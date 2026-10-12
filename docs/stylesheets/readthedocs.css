@@ -1,0 +1,41 @@
+/* Keep the reference Read the Docs layout and give its navigation AI4S-Bench colors. */
+.wy-side-nav-search,
+.wy-nav-top {
+  background: #2474ff;
+}
+
+.wy-nav-side {
+  background: #0d1730;
+}
+
+.wy-side-nav-search > a img.logo {
+  width: 220px;
+  max-width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.wy-menu-vertical a {
+  color: #c7d2e9;
+}
+
+.wy-menu-vertical a:hover {
+  background: #1a2a4c;
+  color: #fff;
+}
+
+.wy-menu-vertical li.current > a,
+.wy-menu-vertical li.current a {
+  color: #26324a;
+}
+
+.rst-content a,
+.wy-breadcrumbs a {
+  color: #2474ff;
+}
+
+.rst-content a:focus-visible,
+.wy-menu-vertical a:focus-visible,
+.wy-side-nav-search a:focus-visible {
+  outline: 2px solid #18b7c9;
+  outline-offset: 2px;
+}
