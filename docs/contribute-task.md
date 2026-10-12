@@ -19,8 +19,9 @@ and include at least:
 | `solution/solve.sh` | Oracle solution |
 | `tests/test.sh` | Verifier that writes `/logs/verifier/reward.txt` |
 
-Use an identifier such as `ai4sbench/my-task` for `[task].name`. Make shell
-scripts executable and use LF line endings. The verifier should emit a
+Use an identifier such as `ai4sbench/my-task` for `[task].name`. Save shell
+scripts with LF line endings. The executable bit is optional: Harbor runs
+`chmod +x` on `.sh` scripts before executing them. The verifier should emit a
 numeric reward; demonstrate that the Oracle succeeds and a no-op agent does
 not. See the [complete example](example.md).
 
