@@ -20,11 +20,15 @@ HARBOR_TASK_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-
 
 
 def changed_task_roots(base: str, head: str) -> set[Path]:
+    # -z keeps non-ASCII paths unquoted; --no-renames also lists the task a file moved out of.
     result = subprocess.run(
-        ["git", "diff", "--name-only", f"{base}...{head}"], check=True, capture_output=True, text=True
+        ["git", "diff", "--name-only", "--no-renames", "-z", f"{base}...{head}"],
+        check=True,
+        capture_output=True,
+        text=True,
     )
     roots: set[Path] = set()
-    for name in result.stdout.splitlines():
+    for name in result.stdout.split("\0"):
         path = Path(name)
         # A task file is tasks/<domain>/<field>/<task-slug>/...; files directly under <field>/ are not tasks.
         if path.parts[:1] == ("tasks",) and len(path.parts) >= 5:
