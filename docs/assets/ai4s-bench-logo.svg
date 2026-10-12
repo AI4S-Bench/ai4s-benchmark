@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" fill="none" role="img" aria-label="AI4S-Bench">
+  <g transform="translate(6 8) scale(0.66)">
+    <path d="M 21.9 82 A 44 44 0 1 1 41.4 99.9" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+    <ellipse cx="60" cy="60" rx="29" ry="16" transform="rotate(-30 60 60)" stroke="#fff" stroke-width="1.8" stroke-dasharray="4 5" stroke-linecap="round"/>
+    <path d="M 32.2 88.7 L 92 27" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="12.5" fill="#fff"/>
+    <circle cx="92" cy="27" r="7.5" fill="#18B7C9"/>
+    <circle cx="28" cy="93" r="6" stroke="#fff" stroke-width="3.4"/>
+    <circle cx="16" cy="52" r="5" fill="#18B7C9"/>
+    <circle cx="92" cy="92" r="5" fill="#B4C5FF"/>
+    <circle cx="26" cy="22" r="2.5" fill="#fff"/>
+    <circle cx="16" cy="32" r="2" fill="#fff"/>
+  </g>
+  <text x="102" y="52" fill="#fff" font-family="Arial, sans-serif" font-size="38" font-weight="800" letter-spacing="1">AI4S</text>
+  <text x="103" y="76" fill="#fff" font-family="Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="7.5">BENCHMARK</text>
+</svg>
