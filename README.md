@@ -46,9 +46,11 @@ link format; maintainers verify the human approval decision.
 
 | Path | Purpose |
 | --- | --- |
-| `tasks/<domain>/<field>/<task>/` | Public Harbor tasks |
+| `tasks/<domain>/<field>/<task-slug>/` | Public Harbor tasks |
 | `bench/` | Pinned runtime and validation matrix |
 | `scripts/` and `tests/` | Contribution checks |
+| `ci_checks/` and `rubrics/` | Advisory AI review of proposals: review scripts and rubric prompts |
 | `docs/` and `mkdocs.yml` | Source for the [documentation site](https://dashboard.ai4sbench.org/document/) |
+| `references/` | Upstream Harbor and Terminal-Bench Science repositories (Git submodules) |
 
 See [bench/README.md](bench/README.md) for the Harbor validation setup.
