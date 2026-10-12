@@ -3,12 +3,7 @@ site_url: https://dashboard.ai4sbench.org/document/
 repo_url: https://github.com/AI4S-Bench/ai4s-benchmark
 edit_uri: edit/main/docs/
 docs_dir: docs
-theme:
-  name: readthedocs
-  logo: assets/ai4s-bench-logo.svg
-  highlightjs: false
-extra_css:
-  - stylesheets/readthedocs.css
+theme: readthedocs
 nav:
   - Overview: index.md
   - Submit a Proposal: submit-proposal.md
