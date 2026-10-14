@@ -3,7 +3,8 @@ id = "amr-poisson-contribution-example"
 title = "AMR Poisson contribution shape example"
 author = "ai4sbench maintainers"
 license = "MIT"
-category = "mathematical-sciences/applied-mathematics"
+domain = "mathematical-sciences"
+field = "applied-mathematics"
 upstream_reference = "https://github.com/harbor-framework/terminal-bench-science"
 
 [task]

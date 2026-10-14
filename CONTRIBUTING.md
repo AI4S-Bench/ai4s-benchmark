@@ -17,6 +17,31 @@ tasks/<domain>/<field>/<task-slug>/
 └── tests/test.sh
 ```
 
+The proposal form offers seven domains for new tasks:
+
+| Proposal domain | `<domain>` folder |
+| --- | --- |
+| Materials Science | `materials-science` |
+| Physics | `physics` |
+| Chemistry | `chemistry` |
+| Biology | `biology` |
+| AI / ML | `ai-ml` |
+| Applied Mathematics | `applied-mathematics` |
+| Interdisciplinary | `interdisciplinary` |
+
+A proposal may select multiple domains; the **first** is primary and determines
+`<domain>`. The research field within that primary domain is free text in the
+proposal and determines the `<field>` slug. For example, `Physics` with
+`Inverse Problems` goes under
+`tasks/physics/inverse-problems/<task-slug>/`.
+
+For a new task, set `[metadata].domain` and `[metadata].field` in `task.toml`
+to those two folder names. Do not use the older combined `category` key for
+new-task classification. The PR check enforces the domain list and both
+metadata-to-folder matches for **new tasks**. Existing task paths, including
+the older `mathematical-sciences/applied-mathematics` example, are retained;
+repairs to them do not have to change their directory or metadata.
+
 `tests/test.sh` must write the trial's reward (for example `1` or `0`) to
 `/logs/verifier/reward.txt`, or a JSON object to `/logs/verifier/reward.json`.
 Harbor ignores the script's exit code and errors the trial if neither file exists.

@@ -46,7 +46,7 @@ link format; maintainers verify the human approval decision.
 
 | Path | Purpose |
 | --- | --- |
-| `tasks/<domain>/<field>/<task>/` | Public Harbor tasks |
+| `tasks/<domain>/<field>/<task-slug>/` | Public Harbor tasks; new task domains follow the [seven proposal choices](CONTRIBUTING.md#required-task-layout) |
 | `bench/` | Pinned runtime and validation matrix |
 | `scripts/` and `tests/` | Contribution checks |
 | `docs/` and `mkdocs.yml` | Source for the [documentation site](https://dashboard.ai4sbench.org/document/) |

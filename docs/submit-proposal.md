@@ -7,6 +7,9 @@ benchmark. Start at the [proposal form](https://ai4sbench.org/submit/).
 2. Describe the scientific area, task objective, available inputs, expected
    output, and how an answer could be checked. Include data access and
    reproducibility details where relevant.
+   The form offers Materials Science, Physics, Chemistry, Biology, AI / ML,
+   Applied Mathematics, and Interdisciplinary. If you select several, put
+   the primary domain first; the research field belongs to that domain.
 3. Submit the form. The site creates a GitHub Discussion for the proposal and
    displays it on the [task board](https://ai4sbench.org/tasks/).
 4. Follow the Discussion for questions and reviews. Use the task page to make
