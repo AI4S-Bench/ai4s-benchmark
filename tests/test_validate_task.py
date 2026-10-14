@@ -24,11 +24,14 @@ def commit_all(repository: Path, message: str) -> str:
     return run(["git", "rev-parse", "HEAD"], repository).stdout.strip()
 
 
-def task_files(root: Path) -> None:
+def task_files(root: Path, *, legacy: bool = False) -> None:
     (root / "environment").mkdir(parents=True)
     (root / "solution").mkdir()
     (root / "tests").mkdir()
-    (root / "task.toml").write_text("[metadata]\nname = 'test-task'\n", encoding="utf-8")
+    metadata = "[metadata]\nname = 'test-task'\n"
+    if not legacy:
+        metadata += f"domain = '{root.parts[-3]}'\nfield = '{root.parts[-2]}'\n"
+    (root / "task.toml").write_text(metadata, encoding="utf-8")
     (root / "instruction.md").write_text("Solve the scientific task.\n", encoding="utf-8")
     (root / "environment" / "Dockerfile").write_text("FROM alpine:3.20\n", encoding="utf-8")
     (root / "solution" / "solve.sh").write_text("#!/bin/sh\n", encoding="utf-8")
@@ -57,7 +60,7 @@ def validate(repository: Path, base: str, head: str, body: str = DISCUSSION) -> 
 def test_task_validator_requires_discussion_and_accepts_terminal_bench_science_shape(tmp_path: Path) -> None:
     base = init_repository(tmp_path)
     run(["git", "checkout", "-b", "task/contribution"], tmp_path)
-    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
 
     missing_discussion = validate(tmp_path, base, head, body="No proposal link yet.")
@@ -71,7 +74,7 @@ def test_task_validator_requires_discussion_and_accepts_terminal_bench_science_s
 
 def test_discussion_link_must_point_at_this_repository(tmp_path: Path) -> None:
     base = init_repository(tmp_path)
-    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
 
     assert validate(tmp_path, base, head, body="https://github.com/other/repo/discussions/1").returncode != 0
@@ -81,7 +84,7 @@ def test_discussion_link_must_point_at_this_repository(tmp_path: Path) -> None:
 def test_existing_task_repair_does_not_require_a_new_proposal(tmp_path: Path) -> None:
     init_repository(tmp_path)
     root = tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation"
-    task_files(root)
+    task_files(root, legacy=True)
     base = commit_all(tmp_path, "existing task")
     (root / "instruction.md").write_text("Clarified scientific instructions.\n", encoding="utf-8")
     head = commit_all(tmp_path, "repair existing task")
@@ -122,7 +125,7 @@ def test_files_directly_under_a_field_are_not_tasks(tmp_path: Path) -> None:
 
 def test_deleting_a_task_needs_no_validation(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation", legacy=True)
     base = commit_all(tmp_path, "add task fixture")
     shutil.rmtree(tmp_path / "tasks")
     head = commit_all(tmp_path, "remove task fixture")
@@ -134,10 +137,10 @@ def test_deleting_a_task_needs_no_validation(tmp_path: Path) -> None:
 def test_changes_merged_to_main_after_branching_are_not_attributed_to_the_pr(tmp_path: Path) -> None:
     init_repository(tmp_path)
     run(["git", "checkout", "-b", "task/contribution"], tmp_path)
-    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
     run(["git", "checkout", "main"], tmp_path)
-    broken = tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "merged-elsewhere"
+    broken = tmp_path / "tasks" / "physics" / "inverse-problems" / "merged-elsewhere"
     task_files(broken)
     (broken / "task.toml").write_text("not = = toml\n", encoding="utf-8")
     base = commit_all(tmp_path, "unrelated task merged to main")
