@@ -5,6 +5,9 @@ The repository includes
 It is a minimal **Harbor contribution fixture**: the instruction asks the
 agent to write a specific marker, and the verifier checks it. It demonstrates
 the packaging and validation workflow, not a scientific AMR Poisson problem.
+Its older `mathematical-sciences` directory is retained for compatibility;
+new tasks use one of the seven primary-domain folders in
+[CONTRIBUTING.md](https://github.com/AI4S-Bench/ai4s-benchmark/blob/main/CONTRIBUTING.md#required-task-layout).
 
 ## Files
 
@@ -17,7 +20,9 @@ tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example
 └── tests/test.sh
 ```
 
-`task.toml` declares `[task].name = "ai4sbench/amr-poisson-contribution-example"`.
+`task.toml` declares `[task].name = "ai4sbench/amr-poisson-contribution-example"`
+and records its existing folder names in `[metadata].domain` and
+`[metadata].field`.
 `instruction.md` specifies the output. The Dockerfile provides the runtime,
 `solution/solve.sh` is the Oracle, and `tests/test.sh` writes `1` or `0` to
 `/logs/verifier/reward.txt` after checking the output.

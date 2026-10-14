@@ -2,7 +2,7 @@
 
 # About This Benchmark
 
-AI4S-Bench is a benchmark for evaluating the ability of AI agents to complete real scientific computing workflows in reproducible, Harbor-compatible task environments. Tasks are drawn from actual research practice across the **natural, mathematical, and engineering sciences** — physics, biology, chemistry, astronomy, neuroscience, the earth sciences, mathematics/statistics, engineering, and the like. A task's substantive domain must be one of these covered sciences and not something outside them (see the **Scope** criterion). We will, in general, only accept tasks that are correct, solvable, verifiable, well-specified, in-scope, and hard for interesting reasons. Your job is to review task proposals against the rubric below.
+AI4S-Bench is a benchmark for evaluating the ability of AI agents to complete real scientific computing workflows in reproducible, Harbor-compatible task environments. The proposal form's seven domains — Materials Science, Physics, Chemistry, Biology, AI / ML, Applied Mathematics, and Interdisciplinary — define the current scope. A task must genuinely fit its selected domain and be grounded in research practice (see **Scope** and **Scientifically Grounded & Interesting**). We will, in general, only accept tasks that are correct, solvable, verifiable, well-specified, in-scope, and hard for interesting reasons. Your job is to review task proposals against the rubric below.
 
 The AI4S-Bench contribution process is:
 1. Authors submit a scientific task proposal through the contribution portal, which opens a GitHub Discussion in **Task Proposals**, or create a proposal Discussion directly.
@@ -24,7 +24,7 @@ All AI4S-Bench tasks must be:
 3. Solvable: The problem must provide a solution, or must have a convincing argument the problem is solvable. The solution should be implementable by someone who knows exactly what to do; there is no upper bound on how long that takes — a longer implementation is fine, and often reflects a more substantial task.
 4. Difficult: the task should be very hard to solve. There are many reasons a problem could be difficult, we require it to be difficult for a "good reason".
 5. Scientifically grounded & interesting: the task must be a realistic, research-level scientific workflow that genuinely requires domain knowledge — not generic work a competent generalist could do — and interesting enough that some scientist would care about or be paid for the result.
-6. Scope: the task must genuinely belong to its assigned domain/field (stated in the proposal; for a PR, the task-folder path), and that field must be one of the covered sciences (life, physical, earth, mathematical, engineering). Judge the actual subject, not the label.
+6. Scope: the task must genuinely belong to its assigned domain/field (stated in the proposal; for a new PR, the task-folder path), and its primary domain must be one of the proposal form's seven domains. Judge the actual research work, not the label.
 7. Outcome-verified: we are grading outcomes, not the process to get there. A process verifier is allowed in certain circumstances but should not be the primary objective.
 
 ## Verifiable
@@ -82,17 +82,17 @@ Crucially, genuine scientific work **requires real domain knowledge to do correc
 
 ## Scope
 
-The field the task is assigned to — stated in the proposal (for a PR, the `tasks/<domain>/<field>/` folder) — must be one of AI4S-Bench's covered sciences, and the task must genuinely belong to it:
+The proposal form's seven domains are authoritative. A proposal may list several in order; the **first is primary** and determines a new task's `tasks/<domain>/<field>/` folder. The research field is free text within that primary domain, not a closed list of field names. Review the actual work against the selected domain:
 
-- **Life sciences** — biology, medicine, neuroscience, ecology
-- **Physical sciences** — astronomy, chemistry, materials science, physics
-- **Earth sciences** — atmospheric sciences, ocean sciences, geosciences, environmental sciences
-- **Mathematical sciences** — applied mathematics, formal mathematics, operations research, statistics
-- **Engineering sciences** — chemical engineering, civil engineering, electrical engineering, mechanical engineering
+- **Materials Science** (`materials-science`) — research on materials, their properties, and their characterization or design.
+- **Physics** (`physics`) — physical systems and methods, including research workflows in astronomy where physics is substantively primary.
+- **Chemistry** (`chemistry`) — chemical systems, reactions, and analysis.
+- **Biology** (`biology`) — biological systems and research workflows, including relevant medical, neuroscience, or ecology work.
+- **AI / ML** (`ai-ml`) — research-level AI or machine-learning work with a substantive scientific question and verifiable outcome. Merely applying a standard model or building generic software is insufficient.
+- **Applied Mathematics** (`applied-mathematics`) — substantive mathematical modeling, numerical methods, statistics, or optimization research.
+- **Interdisciplinary** (`interdisciplinary`) — work that substantively spans multiple supported domains; identify the contributing fields and why the combined work matters.
 
-Two ways to fail: the assigned field is not a covered science, or the task does not actually belong to the field it claims (its real subject is a different field, or none). Judge the actual subject, not the label — an in-scope method (statistics, optimization, simulation, machine learning) applied to an out-of-scope subject is still out of scope, and a task shoehorned into a covered field it does not genuinely fit does not pass. (Whether the work is genuinely research-level science that needs real domain knowledge, rather than generic work, is judged under *Scientifically Grounded & Interesting*.)
-
-A task whose subject is outside the covered fields, or that does not genuinely belong to its assigned field, is a Reject; a genuinely borderline interdisciplinary case is an Uncertain for a human scope call.
+Earth and engineering sciences are not separate form domains at present. Their tasks can still qualify when the actual work genuinely fits one of the seven choices; do not force a task into an unrelated label. A proposal fails Scope when its actual work does not belong to its selected domain or any supported domain. Using statistics, optimization, simulation, or machine learning on an unrelated subject does not by itself establish scientific scope. Assess research depth and domain knowledge under *Scientifically Grounded & Interesting*. Borderline cases, especially interdisciplinary ones, should be marked Uncertain for a human scope decision rather than rejected solely because the field name is unfamiliar.
 
 ## Outcome-verified
 
@@ -111,7 +111,7 @@ Other common pitfalls to avoid:
 # Examples
 
 ## Example: Strong Accept
-A task that asks the agent to process raw astronomical survey data through a photometric pipeline, perform source extraction, cross-match with a reference catalog, and produce a calibrated source catalog with photometric uncertainties within specified tolerances. The task comes from an actual research workflow, has concrete numerical outputs that can be verified against a reference catalog, requires domain knowledge of astronomical data processing, and all dependencies (astropy, SEP, public survey data) are freely available.
+A task under Physics that asks the agent to process raw astronomical survey data through a photometric pipeline, perform source extraction, cross-match with a reference catalog, and produce a calibrated source catalog with photometric uncertainties within specified tolerances. The task comes from an actual research workflow, has concrete numerical outputs that can be verified against a reference catalog, requires domain knowledge of astronomical data processing, and all dependencies (astropy, SEP, public survey data) are freely available.
 
 ## Example: Accept
 A task that asks the agent to fit a Bayesian hierarchical model to a provided dataset of chemical reaction rates, estimate posterior distributions for rate constants, and produce convergence diagnostics. The outputs (parameter estimates, convergence metrics) are verifiable, the workflow is scientifically grounded, but the difficulty level for AI is somewhat uncertain.
@@ -123,7 +123,7 @@ A task that asks the agent to "analyze climate data and draw conclusions about g
 A task that loads a standard teaching dataset and runs a textbook classifier or regression to report a metric. Even with a scientific topic, this is university course-project work — standard methods on a well-trodden dataset — not a real research workflow.
 
 ## Example: Reject (out of scope)
-A rigorous, well-verified statistical or ML pipeline whose subject sits outside the covered sciences. The method is strong and in-scope, but an in-scope method does not make an out-of-scope subject fit.
+A rigorous, well-verified statistical or ML pipeline for a non-research business workflow, with no substantive scientific question or research-level AI / ML work. A familiar method alone does not make the task fit one of the seven domains.
 
 ## Example: Reject (not research-level science)
 A task in a covered field whose actual work is merging, deduplicating, and reformatting raw files into a results table. It needs no real domain knowledge — strip the scientific names and it is generic ETL (or any other generic non-research work), not a research-level scientific workflow.
@@ -146,9 +146,9 @@ After considering each of the seven criteria, make a final decision and explain 
 ## Template:
 
 ## Scientific Domain
-**Domain:** [e.g. Life Sciences]
-**Field:** [e.g. Biology]
-**Subfield:** [e.g. Genomics]
+**Domain:** [e.g. Biology; list secondary selected domains after the primary one]
+**Field:** [e.g. Genomics]
+**Subfield:** [e.g. Variant interpretation]
 
 ## Problem Statement
 [re-statement]
@@ -174,7 +174,7 @@ After considering each of the seven criteria, make a final decision and explain 
 **Judgement:** {strong reject to strong accept}
 
 ## Scope
-[considerations discussing pros and cons — does the task genuinely belong to its assigned domain/field, and is that field a covered science (life/physical/earth/mathematical/engineering)? Judge the actual subject, not the label.]
+[considerations discussing pros and cons — does the task genuinely belong to its primary domain and research field, and is that domain one of the seven form choices? Judge the actual work, not the label.]
 **Judgement:** {strong reject to strong accept}
 
 ## Outcome-Verified

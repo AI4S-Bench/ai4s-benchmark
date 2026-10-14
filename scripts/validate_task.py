@@ -17,6 +17,17 @@ REQUIRED_FILES = (
 )
 # Harbor refuses to load a task whose [task].name is not "org/name".
 HARBOR_TASK_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+NEW_TASK_DOMAINS = frozenset(
+    {
+        "materials-science",
+        "physics",
+        "chemistry",
+        "biology",
+        "ai-ml",
+        "applied-mathematics",
+        "interdisciplinary",
+    }
+)
 
 
 def changed_task_roots(base: str, head: str) -> set[Path]:
@@ -40,14 +51,24 @@ def is_new_task(merge_base: str, root: Path) -> bool:
     ).returncode != 0
 
 
-def task_toml_errors(path: Path) -> list[str]:
+def task_toml_errors(path: Path, *, task_root: Path | None = None, new_task: bool = False) -> list[str]:
     try:
         config = tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
         return [f"{path}: invalid TOML: {exc}"]
     errors: list[str] = []
-    if not isinstance(config.get("metadata"), dict):
+    metadata = config.get("metadata")
+    if not isinstance(metadata, dict):
         errors.append(f"{path}: [metadata] is required")
+    if new_task and task_root is not None:
+        domain, field = task_root.parts[1:3]
+        if domain not in NEW_TASK_DOMAINS:
+            allowed = ", ".join(sorted(NEW_TASK_DOMAINS))
+            errors.append(f"{task_root}: new tasks must use a supported primary-domain folder: {allowed}")
+        if isinstance(metadata, dict):
+            for key, expected in (("domain", domain), ("field", field)):
+                if metadata.get(key) != expected:
+                    errors.append(f"{path}: [metadata].{key} must equal the folder name {expected!r}")
     if "task" in config:
         task = config["task"]
         name = str(task.get("name", "")) if isinstance(task, dict) else ""
@@ -87,7 +108,9 @@ def main() -> None:
         if missing:
             failures.append(f"{root}: missing required files: {', '.join(missing)}")
         if (root / "task.toml").is_file():
-            failures.extend(task_toml_errors(root / "task.toml"))
+            failures.extend(
+                task_toml_errors(root / "task.toml", task_root=root, new_task=root in new_tasks)
+            )
     if failures:
         raise SystemExit("\n".join(failures))
     print(f"Validated {len(task_roots)} task contribution(s), including {len(new_tasks)} new task(s).")
