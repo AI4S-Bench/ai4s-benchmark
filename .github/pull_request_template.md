@@ -8,6 +8,6 @@
 
 ## Contributor checklist
 
-- [ ] For a new task, this PR adds exactly one task under `tasks/<domain>/<field>/<task-slug>/` with the required files.
+- [ ] For a new task, this PR adds exactly one task under `tasks/<domain>/<task-slug>/` with the required files.
 - [ ] For a new task, the human-approved proposal Discussion link is above.
 - [ ] I ran the relevant Oracle and verifier (or explained why I could not).

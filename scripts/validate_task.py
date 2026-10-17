@@ -17,6 +17,7 @@ REQUIRED_FILES = (
 )
 # Harbor refuses to load a task whose [task].name is not "org/name".
 HARBOR_TASK_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+TASK_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 NEW_TASK_DOMAINS = frozenset(
     {
         "materials-science",
@@ -37,18 +38,43 @@ def changed_task_roots(base: str, head: str) -> set[Path]:
     roots: set[Path] = set()
     for name in result.stdout.splitlines():
         path = Path(name)
-        # A task file is tasks/<domain>/<field>/<task-slug>/...; files directly under <field>/ are not tasks.
-        if path.parts[:1] == ("tasks",) and len(path.parts) >= 5:
-            roots.add(Path(*path.parts[:4]))
+        # A task file is tasks/<domain>/<task-slug>/...; files directly under <domain>/ are not tasks.
+        if path.parts[:1] == ("tasks",) and len(path.parts) >= 4:
+            roots.add(Path(*path.parts[:3]))
     return roots
 
 
 def is_new_task(merge_base: str, root: Path) -> bool:
-    """A proposal is required for a new task, not a repair to an existing one."""
+    """A proposal is required for a new task, not a repair or directory migration."""
     task_config = f"{merge_base}:{(root / 'task.toml').as_posix()}"
-    return subprocess.run(
+    if subprocess.run(
         ["git", "cat-file", "-e", task_config], capture_output=True, check=False
-    ).returncode != 0
+    ).returncode == 0:
+        return False
+    # A move from the former domain/field/slug layout retains the task's slug.
+    try:
+        current_name = tomllib.loads((root / "task.toml").read_text(encoding="utf-8")).get("task", {}).get("name")
+    except (OSError, tomllib.TOMLDecodeError, AttributeError):
+        return True
+    if not isinstance(current_name, str) or not current_name:
+        return True
+    previous = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", merge_base, "--", "tasks"],
+        check=True, capture_output=True, text=True,
+    ).stdout.splitlines()
+    for path in previous:
+        if not path.endswith(f"/{root.name}/task.toml") or Path(path).is_file():
+            continue
+        old_text = subprocess.run(
+            ["git", "show", f"{merge_base}:{path}"], check=True, capture_output=True, text=True,
+        ).stdout
+        try:
+            old_name = tomllib.loads(old_text).get("task", {}).get("name")
+        except (tomllib.TOMLDecodeError, AttributeError):
+            continue
+        if old_name == current_name:
+            return False
+    return True
 
 
 def task_toml_errors(path: Path, *, task_root: Path | None = None, new_task: bool = False) -> list[str]:
@@ -60,20 +86,32 @@ def task_toml_errors(path: Path, *, task_root: Path | None = None, new_task: boo
     metadata = config.get("metadata")
     if not isinstance(metadata, dict):
         errors.append(f"{path}: [metadata] is required")
-    if new_task and task_root is not None:
-        domain, field = task_root.parts[1:3]
+    if task_root is not None:
+        if len(task_root.parts) != 3 or task_root.parts[0] != "tasks":
+            errors.append(f"{task_root}: task path must be tasks/<domain>/<task-slug>")
+        if not TASK_SLUG.fullmatch(task_root.name):
+            errors.append(f"{task_root}: task slug must use lowercase letters, digits, and single hyphens")
+    if new_task and task_root is not None and len(task_root.parts) == 3:
+        domain = task_root.parts[1]
         if domain not in NEW_TASK_DOMAINS:
             allowed = ", ".join(sorted(NEW_TASK_DOMAINS))
             errors.append(f"{task_root}: new tasks must use a supported primary-domain folder: {allowed}")
         if isinstance(metadata, dict):
-            for key, expected in (("domain", domain), ("field", field)):
-                if metadata.get(key) != expected:
-                    errors.append(f"{path}: [metadata].{key} must equal the folder name {expected!r}")
+            if metadata.get("domain") != domain:
+                errors.append(f"{path}: [metadata].domain must equal the folder name {domain!r}")
+    if new_task and "task" not in config:
+        errors.append(f"{path}: new tasks require a [task] table")
     if "task" in config:
         task = config["task"]
         name = str(task.get("name", "")) if isinstance(task, dict) else ""
         if not HARBOR_TASK_NAME.match(name) or ".." in name:
             errors.append(f"{path}: [task].name must be an 'org/name' Harbor package name")
+        if new_task and task_root is not None:
+            expected_name = f"ai4sbench/{task_root.name}"
+            if name != expected_name:
+                errors.append(f"{path}: [task].name must equal {expected_name!r}")
+            if not isinstance(task, dict) or not isinstance(task.get("description"), str) or not task["description"].strip():
+                errors.append(f"{path}: new tasks require a non-empty [task].description")
     return errors
 
 

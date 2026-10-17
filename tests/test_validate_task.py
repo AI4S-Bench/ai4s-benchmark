@@ -10,7 +10,7 @@ from scripts import validate_task
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validate_task.py"
-EXAMPLE_TASK = ROOT / "tasks" / "mathematical-sciences" / "applied-mathematics" / "amr-poisson-contribution-example"
+EXAMPLE_TASK = ROOT / "tasks" / "applied-mathematics" / "amr-poisson-contribution-example"
 DISCUSSION = "Approved: https://github.com/example/repo/discussions/1"
 
 
@@ -30,7 +30,8 @@ def task_files(root: Path, *, legacy: bool = False) -> None:
     (root / "tests").mkdir()
     metadata = "[metadata]\nname = 'test-task'\n"
     if not legacy:
-        metadata += f"domain = '{root.parts[-3]}'\nfield = '{root.parts[-2]}'\n"
+        metadata += f"domain = '{root.parts[-2]}'\nfield = 'inverse-problems'\n"
+        metadata += f"\n[task]\nname = 'ai4sbench/{root.name}'\ndescription = 'A test task.'\n"
     (root / "task.toml").write_text(metadata, encoding="utf-8")
     (root / "instruction.md").write_text("Solve the scientific task.\n", encoding="utf-8")
     (root / "environment" / "Dockerfile").write_text("FROM alpine:3.20\n", encoding="utf-8")
@@ -60,7 +61,7 @@ def validate(repository: Path, base: str, head: str, body: str = DISCUSSION) -> 
 def test_task_validator_requires_discussion_and_accepts_terminal_bench_science_shape(tmp_path: Path) -> None:
     base = init_repository(tmp_path)
     run(["git", "checkout", "-b", "task/contribution"], tmp_path)
-    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
 
     missing_discussion = validate(tmp_path, base, head, body="No proposal link yet.")
@@ -74,7 +75,7 @@ def test_task_validator_requires_discussion_and_accepts_terminal_bench_science_s
 
 def test_discussion_link_must_point_at_this_repository(tmp_path: Path) -> None:
     base = init_repository(tmp_path)
-    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
 
     assert validate(tmp_path, base, head, body="https://github.com/other/repo/discussions/1").returncode != 0
@@ -83,7 +84,7 @@ def test_discussion_link_must_point_at_this_repository(tmp_path: Path) -> None:
 
 def test_existing_task_repair_does_not_require_a_new_proposal(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    root = tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation"
+    root = tmp_path / "tasks" / "earth-sciences" / "sparse-assimilation"
     task_files(root, legacy=True)
     base = commit_all(tmp_path, "existing task")
     (root / "instruction.md").write_text("Clarified scientific instructions.\n", encoding="utf-8")
@@ -112,20 +113,76 @@ def test_repository_example_task_is_a_valid_harbor_task() -> None:
     assert "/logs/verifier/reward.txt" in (EXAMPLE_TASK / "tests" / "test.sh").read_text(encoding="utf-8")
 
 
-def test_files_directly_under_a_field_are_not_tasks(tmp_path: Path) -> None:
+def test_files_directly_under_a_domain_are_not_tasks(tmp_path: Path) -> None:
     base = init_repository(tmp_path)
-    (tmp_path / "tasks" / "earth-sciences" / "ocean-sciences").mkdir(parents=True)
-    (tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / ".gitkeep").write_text("", encoding="utf-8")
-    head = commit_all(tmp_path, "add field placeholder")
+    (tmp_path / "tasks" / "physics").mkdir(parents=True)
+    (tmp_path / "tasks" / "physics" / ".gitkeep").write_text("", encoding="utf-8")
+    head = commit_all(tmp_path, "add domain placeholder")
 
     result = validate(tmp_path, base, head, body="")
     assert result.returncode == 0, result.stderr
     assert "No task directory changed" in result.stdout
 
 
+def test_new_task_requires_matching_domain_slug_and_harbor_identity(tmp_path: Path) -> None:
+    root = Path("tasks/physics/sparse-assimilation")
+    task_toml = tmp_path / "task.toml"
+    task_toml.write_text("[metadata]\ndomain = 'physics'\nfield = 'inverse-problems'\n", encoding="utf-8")
+    assert any("[task] table" in error for error in validate_task.task_toml_errors(task_toml, task_root=root, new_task=True))
+
+    task_toml.write_text(
+        "[metadata]\ndomain = 'chemistry'\nfield = 'inverse-problems'\n"
+        "[task]\nname = 'other/sparse-assimilation'\ndescription = ''\n",
+        encoding="utf-8",
+    )
+    errors = validate_task.task_toml_errors(task_toml, task_root=root, new_task=True)
+    assert any("[metadata].domain" in error for error in errors)
+    assert any("ai4sbench/sparse-assimilation" in error for error in errors)
+    assert any("[task].description" in error for error in errors)
+    assert not any("[metadata].field" in error for error in errors)
+
+    assert any("task slug" in error for error in validate_task.task_toml_errors(
+        task_toml, task_root=Path("tasks/physics/Bad_Slug"), new_task=True,
+    ))
+
+
+def test_old_field_level_path_is_not_a_valid_task_root(tmp_path: Path) -> None:
+    base = init_repository(tmp_path)
+    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
+    head = commit_all(tmp_path, "add old-layout task")
+    result = validate(tmp_path, base, head)
+    assert result.returncode != 0
+    assert "missing required files" in result.stderr
+
+
+def test_moving_existing_task_to_domain_slug_path_needs_no_new_proposal(tmp_path: Path) -> None:
+    init_repository(tmp_path)
+    old = tmp_path / "tasks" / "mathematical-sciences" / "applied-mathematics" / "sparse-assimilation"
+    task_files(old, legacy=True)
+    (old / "task.toml").write_text(
+        "[metadata]\nname = 'test-task'\n[task]\nname = 'ai4sbench/sparse-assimilation'\n",
+        encoding="utf-8",
+    )
+    base = commit_all(tmp_path, "add old-layout task")
+    new = tmp_path / "tasks" / "applied-mathematics" / "sparse-assimilation"
+    new.parent.mkdir(parents=True)
+    shutil.move(str(old), str(new))
+    head = commit_all(tmp_path, "migrate task path")
+    result = validate(tmp_path, base, head, body="Layout migration without a proposal")
+    assert result.returncode == 0, result.stderr
+    assert "0 new task(s)" in result.stdout
+
+    (new / "task.toml").write_text(
+        "[metadata]\nname = 'test-task'\n[task]\nname = 'ai4sbench/different-task'\n",
+        encoding="utf-8",
+    )
+    changed_head = commit_all(tmp_path, "change task identity")
+    assert validate(tmp_path, base, changed_head, body="No proposal").returncode != 0
+
+
 def test_deleting_a_task_needs_no_validation(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    task_files(tmp_path / "tasks" / "earth-sciences" / "ocean-sciences" / "sparse-assimilation", legacy=True)
+    task_files(tmp_path / "tasks" / "earth-sciences" / "sparse-assimilation", legacy=True)
     base = commit_all(tmp_path, "add task fixture")
     shutil.rmtree(tmp_path / "tasks")
     head = commit_all(tmp_path, "remove task fixture")
@@ -137,10 +194,10 @@ def test_deleting_a_task_needs_no_validation(tmp_path: Path) -> None:
 def test_changes_merged_to_main_after_branching_are_not_attributed_to_the_pr(tmp_path: Path) -> None:
     init_repository(tmp_path)
     run(["git", "checkout", "-b", "task/contribution"], tmp_path)
-    task_files(tmp_path / "tasks" / "physics" / "inverse-problems" / "sparse-assimilation")
+    task_files(tmp_path / "tasks" / "physics" / "sparse-assimilation")
     head = commit_all(tmp_path, "add task fixture")
     run(["git", "checkout", "main"], tmp_path)
-    broken = tmp_path / "tasks" / "physics" / "inverse-problems" / "merged-elsewhere"
+    broken = tmp_path / "tasks" / "physics" / "merged-elsewhere"
     task_files(broken)
     (broken / "task.toml").write_text("not = = toml\n", encoding="utf-8")
     base = commit_all(tmp_path, "unrelated task merged to main")

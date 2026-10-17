@@ -24,7 +24,7 @@ All AI4S-Bench tasks must be:
 3. Solvable: The problem must provide a solution, or must have a convincing argument the problem is solvable. The solution should be implementable by someone who knows exactly what to do; there is no upper bound on how long that takes — a longer implementation is fine, and often reflects a more substantial task.
 4. Difficult: the task should be very hard to solve. There are many reasons a problem could be difficult, we require it to be difficult for a "good reason".
 5. Scientifically grounded & interesting: the task must be a realistic, research-level scientific workflow that genuinely requires domain knowledge — not generic work a competent generalist could do — and interesting enough that some scientist would care about or be paid for the result.
-6. Scope: the task must genuinely belong to its assigned domain/field (stated in the proposal; for a new PR, the task-folder path), and its primary domain must be one of the proposal form's seven domains. Judge the actual research work, not the label.
+6. Scope: the task must genuinely belong to its assigned domain and research field. The primary domain appears in the task-folder path; the field remains proposal metadata. Its primary domain must be one of the proposal form's seven domains. Judge the actual research work, not the label.
 7. Outcome-verified: we are grading outcomes, not the process to get there. A process verifier is allowed in certain circumstances but should not be the primary objective.
 
 ## Verifiable
@@ -82,7 +82,7 @@ Crucially, genuine scientific work **requires real domain knowledge to do correc
 
 ## Scope
 
-The proposal form's seven domains are authoritative. A proposal may list several in order; the **first is primary** and determines a new task's `tasks/<domain>/<field>/` folder. The research field is free text within that primary domain, not a closed list of field names. Review the actual work against the selected domain:
+The proposal form's seven domains are authoritative. A proposal may list several in order; the **first is primary** and determines a new task's `tasks/<domain>/<task-slug>/` folder. The research field is free text within that primary domain and does not add a path segment. Review the actual work against the selected domain:
 
 - **Materials Science** (`materials-science`) — research on materials, their properties, and their characterization or design.
 - **Physics** (`physics`) — physical systems and methods, including research workflows in astronomy where physics is substantively primary.
