@@ -4,8 +4,8 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
-dist/
-build/
+/dist/
+/build/
 *.egg-info/
 review-artifacts/
-site/
+/site/
