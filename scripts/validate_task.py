@@ -92,7 +92,8 @@ def main() -> None:
     ).stdout.strip()
     new_tasks = {root for root in task_roots if is_new_task(merge_base, root)}
     if new_tasks:
-        body = os.environ.get("PR_BODY", "")
+        # A link left inside the template's <!-- --> guidance is invisible on the rendered PR.
+        body = re.sub(r"<!--.*?-->", "", os.environ.get("PR_BODY", ""), flags=re.DOTALL)
         repository = os.environ.get("GITHUB_REPOSITORY", "AI4S-Bench/ai4s-benchmark")
         discussion = re.compile(
             rf"https://github\.com/{re.escape(repository)}/discussions/\d+", re.IGNORECASE
