@@ -59,7 +59,14 @@ oracle and verifier.
 ## Reference example
 
 The pinned reference task is Terminal-Bench Science's real
-[`amr-poisson-optimize`](https://github.com/harbor-framework/terminal-bench-science/tree/main/tasks/mathematical-sciences/applied-mathematics/amr-poisson-optimize)
+[`amr-poisson-optimize`](https://github.com/harbor-framework/terminal-bench-science/tree/1fafc470bdc6c84820219d282fe6b154120596ad/tasks/mathematical-sciences/applied-mathematics/amr-poisson-optimize)
 task: a Docker environment, oracle solution, and independent verifier for AMR
 Poisson optimization. Its immutable upstream revision is recorded in
 [`bench/ai4sbench.toml`](bench/ai4sbench.toml).
+
+The in-repo
+[`amr-poisson-contribution-example`](tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example)
+is a smaller starting point: a Harbor layout fixture with the required files,
+an Oracle solution and a verifier. It is not a scientific AMR benchmark task.
+The [complete example](https://dashboard.ai4sbench.org/document/example/)
+walks through its files and validation commands.
