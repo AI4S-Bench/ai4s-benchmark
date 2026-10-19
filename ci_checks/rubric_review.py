@@ -344,10 +344,11 @@ def extract_scientific_domain(review_text: str) -> str | None:
 
 def _extract_section(review_text: str, *names: str) -> str | None:
     """Return the first non-empty markdown section body matching any of
-    ``names`` (stops at the next header or a ``Decision:`` line)."""
+    ``names`` (stops at the next header or a ``Decision-Reason:`` / ``Decision:``
+    line, bold or not)."""
     for name in names:
         m = re.search(
-            rf"(?ims)^#+\s*{re.escape(name)}\s*\n+(.+?)(?:\n#+\s|\nDecision:|\Z)",
+            rf"(?ims)^#+\s*{re.escape(name)}\s*\n+(.+?)(?:\n#+\s|\n\*{{0,2}}Decision(?:-Reason)?:|\Z)",
             review_text,
         )
         if m and m.group(1).strip():
