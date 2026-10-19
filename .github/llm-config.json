@@ -1,10 +1,10 @@
 {
   "proposal_review": {
-    "llm_provider": "openrouter",
-    "model": "dots-studio/dots-3-note-preview:free",
-    "base_url": "https://openrouter.ai/api/v1",
-    "require_free_model": true,
-    "max_tokens_parameter": "max_tokens",
+    "llm_provider": "openai_compatible",
+    "model": "openai/gpt-5.6-sol",
+    "base_url": "https://api.commonstack.ai/v1",
+    "require_free_model": false,
+    "max_tokens_parameter": "max_completion_tokens",
     "upstream_sha": "f55c14ea065243c8d094e02c0aa156d5fd22fdd4"
   }
 }
