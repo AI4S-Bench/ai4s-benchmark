@@ -1,18 +1,17 @@
 # Complete example: AMR Poisson task fixture
 
 The repository includes
-[`amr-poisson-contribution-example`](https://github.com/AI4S-Bench/ai4s-benchmark/tree/main/tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example).
+[`amr-poisson-contribution-example`](https://github.com/AI4S-Bench/ai4s-benchmark/tree/main/tasks/applied-mathematics/amr-poisson-contribution-example).
 It is a minimal **Harbor contribution fixture**: the instruction asks the
 agent to write a specific marker, and the verifier checks it. It demonstrates
 the packaging and validation workflow, not a scientific AMR Poisson problem.
-Its older `mathematical-sciences` directory is retained for compatibility;
-new tasks use one of the seven primary-domain folders in
+It uses the `applied-mathematics` domain folder; new tasks use one of the seven primary-domain folders in
 [CONTRIBUTING.md](https://github.com/AI4S-Bench/ai4s-benchmark/blob/main/CONTRIBUTING.md#required-task-layout).
 
 ## Files
 
 ```text
-tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example/
+tasks/applied-mathematics/amr-poisson-contribution-example/
 ├── task.toml
 ├── instruction.md
 ├── environment/Dockerfile
@@ -21,8 +20,8 @@ tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example
 ```
 
 `task.toml` declares `[task].name = "ai4sbench/amr-poisson-contribution-example"`
-and records its existing folder names in `[metadata].domain` and
-`[metadata].field`.
+and records its domain folder in `[metadata].domain`. Its `[metadata].field`
+describes the research area without adding a path segment.
 `instruction.md` specifies the output. The Dockerfile provides the runtime,
 `solution/solve.sh` is the Oracle, and `tests/test.sh` writes `1` or `0` to
 `/logs/verifier/reward.txt` after checking the output.
@@ -34,8 +33,8 @@ Set up the pinned Harbor runtime as described in
 From the benchmark repository root, run:
 
 ```bash
-harbor run -p tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example -a oracle -e docker
-harbor run -p tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example -a nop -e docker
+harbor run -p tasks/applied-mathematics/amr-poisson-contribution-example -a oracle -e docker
+harbor run -p tasks/applied-mathematics/amr-poisson-contribution-example -a nop -e docker
 ```
 
 The Oracle run should report reward `1.0`; the no-op run should report `0.0`.

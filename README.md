@@ -27,8 +27,8 @@ scientific AMR benchmark task. From a checkout of this repository with Harbor
 installed, run:
 
 ```bash
-harbor run -p tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example -a oracle -e docker
-harbor run -p tasks/mathematical-sciences/applied-mathematics/amr-poisson-contribution-example -a nop -e docker
+harbor run -p tasks/applied-mathematics/amr-poisson-contribution-example -a oracle -e docker
+harbor run -p tasks/applied-mathematics/amr-poisson-contribution-example -a nop -e docker
 ```
 
 The Oracle should earn reward `1.0` and the no-op agent reward `0.0`.
@@ -46,7 +46,7 @@ link format; maintainers verify the human approval decision.
 
 | Path | Purpose |
 | --- | --- |
-| `tasks/<domain>/<field>/<task-slug>/` | Public Harbor tasks; new task domains follow the [seven proposal choices](CONTRIBUTING.md#required-task-layout) |
+| `tasks/<domain>/<task-slug>/` | Public Harbor tasks; new task domains follow the [seven proposal choices](CONTRIBUTING.md#required-task-layout) |
 | `bench/` | Pinned runtime and validation matrix |
 | `scripts/` and `tests/` | Contribution checks |
 | `docs/` and `mkdocs.yml` | Source for the [documentation site](https://dashboard.ai4sbench.org/document/) |
