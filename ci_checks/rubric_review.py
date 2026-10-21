@@ -271,7 +271,7 @@ def call_openai(system: str, user: str | list, model: str) -> str:
     client = openai.OpenAI(timeout=90, max_retries=2)
     content = _anthropic_blocks_to_openai(user)
     # AI4S: keep a conservative input budget across configured providers.
-    if len(system.encode("utf-8")) + len(str(content).encode("utf-8")) > 28_000:
+    if len(system.encode("utf-8")) + len(str(content).encode("utf-8")) > 64_000:
         raise ValueError("Proposal plus rubric exceeds the review input budget")
     messages = [
         {"role": "system", "content": system},
