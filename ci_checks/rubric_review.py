@@ -141,8 +141,9 @@ def load_rubric(rubric_path: Path) -> str:
 
 
 def strip_author_info(text: str) -> str:
-    """Remove the ## Author Information section from a proposal."""
-    return re.sub(r"(?im)^## Author Information.*?(?=^##|\Z)", "", text, flags=re.DOTALL).strip()
+    """Remove the ## Author Information and portal ## Contributor sections from a proposal."""
+    return re.sub(r"(?im)^## (?:Author Information|Contributor).*?(?=^##|\Z)", "", text,
+                  flags=re.DOTALL).strip()
 
 
 def extract_author_info(text: str) -> str | None:
