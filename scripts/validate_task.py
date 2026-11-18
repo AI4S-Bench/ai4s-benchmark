@@ -1,3 +1,5 @@
+# Adapted from https://github.com/harbor-framework/terminal-bench-science/blob/01b3c488061353987d6407b170c2ffbc851802f2/ci_checks/check-task-fields.sh
+# AI4S-Bench keeps its own seven-domain taxonomy and proposal-link contract.
 from __future__ import annotations
 
 import argparse

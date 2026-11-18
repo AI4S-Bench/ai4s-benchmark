@@ -108,6 +108,22 @@ def test_task_toml_must_parse_and_name_a_harbor_package(tmp_path: Path) -> None:
     assert validate_task.task_toml_errors(task_toml) == []
 
 
+def test_new_task_requires_publishable_harbor_fields(tmp_path: Path) -> None:
+    task_toml = tmp_path / "task.toml"
+    task_root = Path("tasks/physics/sparse-assimilation")
+    task_toml.write_text("[metadata]\ndomain = 'physics'\nfield = 'inverse-problems'\n", encoding="utf-8")
+    assert any("[task] table" in error for error in validate_task.task_toml_errors(task_toml, task_root=task_root, new_task=True))
+
+    task_toml.write_text(
+        "[metadata]\ndomain = 'physics'\nfield = 'inverse-problems'\n"
+        "[task]\nname = 'other/sparse-assimilation'\ndescription = ''\n",
+        encoding="utf-8",
+    )
+    errors = validate_task.task_toml_errors(task_toml, task_root=task_root, new_task=True)
+    assert any("ai4sbench/sparse-assimilation" in error for error in errors)
+    assert any("[task].description" in error for error in errors)
+
+
 def test_repository_example_task_is_a_valid_harbor_task() -> None:
     assert validate_task.task_toml_errors(EXAMPLE_TASK / "task.toml") == []
     assert "/logs/verifier/reward.txt" in (EXAMPLE_TASK / "tests" / "test.sh").read_text(encoding="utf-8")

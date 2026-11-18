@@ -1,32 +1,67 @@
+# Adapted from https://github.com/harbor-framework/terminal-bench-science/blob/01b3c488061353987d6407b170c2ffbc851802f2/.github/workflows/static-checks.yml
+# TBS runs trusted static checkers against PR task files. This version keeps
+# AI4S-Bench's domain taxonomy, Harbor layout, and proposal-link rules.
 name: validate-task-contribution
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
-    # `edited` re-runs the check when a contributor adds the Discussion link to the PR body.
+    # Editing the PR body must recheck a newly added proposal link.
     types: [opened, edited, reopened, synchronize]
     paths:
       - "tasks/**"
       - ".github/workflows/validate-task.yml"
+      - ".github/workflows/validate-task-run.yml"
       - "scripts/validate_task.py"
       - "tests/test_validate_task.py"
+      - "ci_checks/check-task-structure.sh"
+      - "ci_checks/check-dockerfile-references.sh"
       - ".github/pull_request_template.md"
 
 permissions:
   contents: read
-  pull-requests: read
+
+concurrency:
+  group: validate-task-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   task-shape:
     runs-on: ubuntu-latest
     steps:
+      # Checker code comes from the target branch; the PR cannot weaken its own gate.
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.base_ref }}
+          path: base
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
           fetch-depth: 0
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate domain/slug task layout and proposal reference
+      - name: Validate AI4S-Bench task layout and proposal reference
+        working-directory: pr
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: python scripts/validate_task.py --base "${{ github.event.pull_request.base.sha }}" --head "${{ github.event.pull_request.head.sha }}"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python ../base/scripts/validate_task.py --base "$BASE_SHA" --head "$HEAD_SHA"
+          if [ -f ../base/ci_checks/check-task-structure.sh ]; then
+            git diff --name-only "$BASE_SHA...$HEAD_SHA" \
+              | awk -F/ '$1 == "tasks" && NF >= 4 { print $1 "/" $2 "/" $3 }' \
+              | sort -u \
+              | while IFS= read -r task_dir; do
+                  [ -d "$task_dir" ] || continue
+                  bash ../base/ci_checks/check-task-structure.sh "$task_dir"
+                  if [ -f ../base/ci_checks/check-dockerfile-references.sh ]; then
+                    bash ../base/ci_checks/check-dockerfile-references.sh "$task_dir"
+                  fi
+                done
+          fi
