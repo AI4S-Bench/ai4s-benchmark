@@ -1,0 +1,19 @@
+[metadata]
+id = "inverse-diffusion-coefficient-live-e2e"
+title = "Recover a spatially varying heat diffusion coefficient"
+author = "AI4S-Bench"
+license = "MIT"
+
+[task]
+name = "ai4s-bench/inverse-diffusion-coefficient-live-e2e"
+description = "Infer a smooth positive diffusion field from sparse heat observations."
+
+[environment]
+cpus = 2
+memory_mb = 4096
+
+[agent]
+timeout_sec = 1200
+
+[verifier]
+timeout_sec = 120
