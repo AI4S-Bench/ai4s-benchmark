@@ -45,16 +45,27 @@ The contribution example now lives at
 `/logs/verifier/reward.txt`, or a JSON object to `/logs/verifier/reward.json`.
 Harbor ignores the script's exit code and errors the trial if neither file exists.
 New tasks must define `[task].name = "ai4sbench/<task-slug>"` and a non-empty
-`[task].description`. Existing tasks with a `[task]` table keep a valid
-`org/name` Harbor package name.
+`[task].description`. For existing tasks with a `[task]` table, `name` must
+remain an `org/name` Harbor package name.
 
-The PR check validates the layout and that `task.toml` is valid TOML with a
-`[metadata]` table and Harbor task identity fields. For a **new**
-task, the PR body must link an approved Discussion in this repository. Repairs
-to an existing task do not require a new proposal, but should explain the
-problem and the evidence for the fix. The check verifies the link's format;
-maintainers confirm the human approval. It does not replace executing the
-oracle and verifier.
+The automatic PR check validates the layout and that `task.toml` is valid TOML
+with a `[metadata]` table and Harbor task identity fields. It also
+uses Terminal-Bench-Science's static checks to reject misplaced Docker/Compose
+files, committed build or editor debris, and Dockerfiles that copy the Oracle
+solution or verifier into the agent image. For a **new** task,
+the PR body must link an approved Discussion in this repository. Repairs to an
+existing task do not require a new proposal, but should explain the problem
+and the evidence for the fix. The check verifies the link's format; maintainers
+confirm the human approval.
+
+After reviewing the task PR, a repository admin can post a standalone
+`/validate` comment. This runs the pinned Harbor 0.20.0 on the PR head: it
+builds the Docker environment, runs the Oracle and requires reward 1.0, then
+runs the no-op agent and requires reward 0.0. The execution workflow has a
+read-only token and no repository secrets. It supports CPU tasks using the
+Docker backend; GPU and credentialed backends need separate infrastructure.
+The administrator's `/validate` comment is the approval to execute PR task
+code. The static PR check runs without that comment.
 
 ## Reference example
 

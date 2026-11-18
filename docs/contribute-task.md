@@ -48,7 +48,7 @@ For instructions on writing these files, follow Harbor's
 [Create a task tutorial](https://docs.harborframework.com/tutorials/create-a-task)
 or the [Terminal-Bench Science contribution guide](https://github.com/harbor-framework/terminal-bench-science/blob/main/CONTRIBUTING.md).
 Apply this benchmark's domain and metadata rules to their examples. Use an
-identifier such as `ai4sbench/my-task` for `[task].name` and make shell
+`ai4sbench/<task-slug>` for `[task].name`, provide a non-empty `[task].description` and make shell
 scripts executable. The verifier should emit a numeric reward; demonstrate
 that the Oracle succeeds and a no-op agent does not. See the
 [complete example](example.md).
@@ -108,7 +108,10 @@ Open a PR against `AI4S-Bench/ai4s-benchmark` with a summary of the task,
 the **human-approved proposal Discussion URL**, the validation commands,
 and the observed rewards. CI checks the directory structure and Discussion
 link format. Maintainers verify the proposal's actual human approval and
-review the task behavior.
+review the task behavior. A repository admin can post `/validate` on the PR
+to run the pinned Harbor Docker build, Oracle, and no-op checks against the
+PR head. That execution check supports CPU/Docker tasks; GPU or credentialed
+backends require separate infrastructure.
 
 If your PR only repairs an existing task, say so in its description. A
 maintenance PR does not require a new proposal link, but should explain the

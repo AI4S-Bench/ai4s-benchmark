@@ -1,0 +1,169 @@
+# Adapted from https://github.com/harbor-framework/terminal-bench-science/blob/01b3c488061353987d6407b170c2ffbc851802f2/.github/workflows/validate-task.yml
+# AI4S-Bench runs the pinned Docker/Harbor oracle and nop checks only after a
+# repository admin posts /validate on a task PR. No repository secrets are used.
+name: validate-task-execution
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  authorize:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/validate')
+    runs-on: ubuntu-latest
+    outputs:
+      base_sha: ${{ steps.gate.outputs.base_sha }}
+      head_sha: ${{ steps.gate.outputs.head_sha }}
+      tasks: ${{ steps.gate.outputs.tasks }}
+    steps:
+      - name: Require an admin and identify changed tasks
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$COMMENT_BODY" =~ ^/validate[[:space:]]*$ ]]; then
+            echo "Only a standalone /validate comment starts execution"
+            exit 1
+          fi
+          permission=$(gh api "repos/$REPO/collaborators/$COMMENT_USER/permission" --jq .permission)
+          if [ "$permission" != admin ]; then
+            echo "Only a repository admin may request /validate"
+            exit 1
+          fi
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          if [ "$(jq -r .state <<< "$pr")" != open ]; then
+            echo "Task validation only supports open PRs"
+            exit 1
+          fi
+          if [ "$(jq -r .base.ref <<< "$pr")" != main ]; then
+            echo "Task validation only supports PRs targeting main"
+            exit 1
+          fi
+          echo "base_sha=$(jq -r .base.sha <<< "$pr")" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(jq -r .head.sha <<< "$pr")" >> "$GITHUB_OUTPUT"
+          tasks=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename' \
+            | awk -F/ '$1 == "tasks" && NF >= 4 { print $1 "/" $2 "/" $3 }' \
+            | sort -u | jq -Rsc 'split("\n") | map(select(length > 0))')
+          if [ "$tasks" = '[]' ]; then
+            echo "This PR has no changed task directories"
+            exit 1
+          fi
+          echo "tasks=$tasks" >> "$GITHUB_OUTPUT"
+
+  execution-checks:
+    needs: authorize
+    if: needs.authorize.result == 'success'
+    # Only an authorized execution enters this group. Ordinary and unauthorized
+    # comments cannot cancel one. Separate task groups keep matrix jobs parallel.
+    concurrency:
+      group: validate-task-execution-${{ github.event.issue.number }}-${{ matrix.task }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ${{ fromJson(needs.authorize.outputs.tasks) }}
+    steps:
+      # The validator is trusted base-branch code; the task content is PR code.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: base
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.authorize.outputs.head_sha }}
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - name: Recheck the PR task before executing it
+        working-directory: pr
+        env:
+          PR_BODY: ${{ github.event.issue.body }}
+          BASE_SHA: ${{ needs.authorize.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
+          TASK_DIR: ${{ matrix.task }}
+        run: |
+          python ../base/scripts/validate_task.py --base "$BASE_SHA" --head "$HEAD_SHA"
+          test -d "$TASK_DIR"
+          if [ -f ../base/ci_checks/check-task-structure.sh ]; then
+            bash ../base/ci_checks/check-task-structure.sh "$TASK_DIR"
+          fi
+          if [ -f ../base/ci_checks/check-dockerfile-references.sh ]; then
+            bash ../base/ci_checks/check-dockerfile-references.sh "$TASK_DIR"
+          fi
+          python - "$TASK_DIR/task.toml" <<'PY'
+          import sys, tomllib
+          with open(sys.argv[1], 'rb') as f:
+              config = tomllib.load(f)
+          environment = config.get('environment', {})
+          if environment.get('validate_env', 'docker') != 'docker' or environment.get('gpus', 0):
+              raise SystemExit('This workflow supports Docker/CPU tasks only; use a configured remote backend for GPU tasks')
+          PY
+      - name: Install pinned Harbor
+        working-directory: pr
+        run: uv tool install --no-build --no-cache --python 3.12 "harbor==0.20.0"
+      - name: Build Docker environment
+        id: docker_build
+        working-directory: pr
+        env:
+          TASK_DIR: ${{ matrix.task }}
+        run: |
+          safe_tag=$(printf '%s' "$TASK_DIR" | tr '/' '-')
+          docker build -t "task-env-$safe_tag" "$TASK_DIR/environment"
+      - name: Oracle must earn full reward
+        id: oracle
+        working-directory: pr
+        env:
+          TASK_DIR: ${{ matrix.task }}
+        run: |
+          harbor run -p "$TASK_DIR" -a oracle -e docker -o harbor-output-oracle 2>&1 | tee oracle.log
+          reward=$(python -c 'import re,sys; values=re.findall(r"Mean[:\s]+([0-9]+(?:\.[0-9]+)?)",sys.stdin.read()); print(values[-1] if values else "")' < oracle.log)
+          python - "$reward" <<'PY'
+          import sys
+          try:
+              assert float(sys.argv[1]) >= 1.0
+          except (ValueError, AssertionError):
+              raise SystemExit(f'Oracle must earn reward 1.0; got {sys.argv[1]!r}')
+          PY
+      - name: No-op must earn zero reward
+        if: always() && steps.docker_build.outcome == 'success'
+        working-directory: pr
+        env:
+          TASK_DIR: ${{ matrix.task }}
+        run: |
+          harbor run -p "$TASK_DIR" -a nop -e docker -o harbor-output-nop 2>&1 | tee nop.log
+          reward=$(python -c 'import re,sys; values=re.findall(r"Mean[:\s]+([0-9]+(?:\.[0-9]+)?)",sys.stdin.read()); print(values[-1] if values else "")' < nop.log)
+          python - "$reward" <<'PY'
+          import sys
+          try:
+              assert float(sys.argv[1]) == 0.0
+          except (ValueError, AssertionError):
+              raise SystemExit(f'No-op must earn reward 0.0; got {sys.argv[1]!r}')
+          PY
+      - name: Preserve Harbor diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: task-validation-${{ strategy.job-index }}
+          path: |
+            pr/oracle.log
+            pr/nop.log
+            pr/harbor-output-oracle/
+            pr/harbor-output-nop/
+          if-no-files-found: ignore
+          retention-days: 7
